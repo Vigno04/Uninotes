@@ -1,10 +1,11 @@
 <?php
 session_start();
-if (!isset($_SESSION["username"]) || $_SESSION["usertype"] !== "user") {
-    header("location:login.php");
-    exit();
+if (!isset($_SESSION['person_id'])) {
+    header('Location: login.php');
+    exit;
 }
 ?>
+
 
 <!DOCTYPE html>
 <html lang="en">

@@ -1,53 +1,87 @@
 <?php
-$host = "localhost";
-$user = "root";
-$password = "";
-$db = "user";
-
 session_start();
 
-$data = mysqli_connect($host, $user, $password, $db);
-if ($data === false) {
-    die("Connection error");
+// Connessione al database UniNotes
+$host = "localhost";
+$user = "root";
+$password = "";        // la tua password MySQL
+$dbname = "uninotes";  // nome del database dove hai importato lo schema
+
+$conn = mysqli_connect($host, $user, $password, $dbname);
+if ($conn === false) {
+    die("Connection error: " . mysqli_connect_error());
 }
 
 $message = "";
 
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $username = mysqli_real_escape_string($data, $_POST['username']);
-    $password = $_POST['password'];
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    // In questo progetto usiamo l'email come "username"
+    $email    = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
 
-    // Use prepared statement to prevent SQL injection
-    $sql = "SELECT * FROM login WHERE username = ? LIMIT 1";
-    $stmt = mysqli_prepare($data, $sql);
-    mysqli_stmt_bind_param($stmt, "s", $username);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-    $row = mysqli_fetch_array($result);
+    if ($email === '' || $password === '') {
+        $message = '<div class="alert alert-danger">Inserisci email e password.</div>';
+    } else {
+        // Cerco la persona per email e recupero anche i dati da user
+        $sql = "
+            SELECT 
+                p.id AS person_id,
+                p.name,
+                p.surname,
+                p.email,
+                u.password,
+                u.role
+            FROM person p
+            JOIN user u ON p.id = u.person_id
+            WHERE p.email = ?
+            LIMIT 1
+        ";
 
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt === false) {
+            die("Query error: " . mysqli_error($conn));
+        }
 
-    if ($row) {
-        if ($row["usertype"] == "user") {
-            $_SESSION["username"] = $username;
-            $_SESSION["usertype"] = "user";
-            header("location:userhome.php");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $result = mysqli_stmt_get_result($stmt);
+        $row = mysqli_fetch_assoc($result);
+
+        // Per ora password in chiaro: confronto diretto
+        // (se poi userai password_hash, sostituisci con password_verify)
+        if ($row && $row['password'] === $password) {
+            // Login OK → salvo dati in sessione
+            $_SESSION["person_id"] = $row["person_id"];
+            $_SESSION["name"]      = $row["name"];
+            $_SESSION["surname"]   = $row["surname"];
+            $_SESSION["email"]     = $row["email"];
+            $_SESSION["role"]      = $row["role"];
+
+            // aggiorno last_login (opzionale)
+            $update = mysqli_prepare($conn, "UPDATE user SET last_login = NOW() WHERE person_id = ?");
+            if ($update) {
+                mysqli_stmt_bind_param($update, "i", $row["person_id"]);
+                mysqli_stmt_execute($update);
+            }
+
+            if ($row["role"] === "admin") {
+                header("Location: adminhome.php");
+            } else {
+                header("Location: userhome.php");
+            }
             exit();
-        } elseif ($row["usertype"] == "admin") {
-            $_SESSION["username"] = $username;
-            $_SESSION["usertype"] = "admin";
-            header("location:adminhome.php");
-            exit();
+        } else {
+            $message = '<div class="alert alert-danger">Email o password errate.</div>';
         }
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Login - MyApp</title>
+    <title>Login - UniNotes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
@@ -57,8 +91,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <?= $message ?>
         <form action="" method="POST">
             <div class="mb-3">
-                <label class="form-label">Username</label>
-                <input type="text" name="username" class="form-control form-control-lg" required autofocus>
+                <label class="form-label">Email</label>
+                <input type="email" name="username" class="form-control form-control-lg" required autofocus>
             </div>
             <div class="mb-4">
                 <label class="form-label">Password</label>
@@ -66,7 +100,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             </div>
             <button type="submit" class="btn btn-primary w-100 btn-lg">Login</button>
         </form>
-        <p class="text-center text-muted mt-4 mb-0">© 2025 MyApp - All Rights Reserved</p>
+        <p class="text-center text-muted mt-4 mb-0">© 2025 UniNotes - All Rights Reserved</p>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
