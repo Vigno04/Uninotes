@@ -1,0 +1,44 @@
+/* style.css */
+body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.login-card, .home-card {
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    padding: 40px;
+    margin-top: 80px;
+}
+
+.home-card h1 {
+    color: #4a5568;
+    font-weight: 300;
+    margin-bottom: 30px;
+}
+
+.btn-logout {
+    background: #e53e3e;
+    border: none;
+    padding: 10px 25px;
+    border-radius: 50px;
+    transition: all 0.3s;
+}
+
+.btn-logout:hover {
+    background: #c53030;
+    transform: translateY(-2px);
+}
+
+.welcome-text {
+    font-size: 1.8rem;
+    color: #2d3748;
+}
+
+.role-badge {
+    font-size: 1.1rem;
+    padding: 8px 20px;
+    border-radius: 50px;
+}
