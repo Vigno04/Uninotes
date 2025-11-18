@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`password` VARCHAR(255) NOT NULL,
 	`role` ENUM('user', 'admin') DEFAULT 'user',
 	`last_login` TIMESTAMP NULL,
+	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`deleted_at` TIMESTAMP NULL DEFAULT NULL,
 	PRIMARY KEY(`person_id`),
 	FOREIGN KEY(`person_id`) REFERENCES `person`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
@@ -48,6 +49,7 @@ CREATE TABLE IF NOT EXISTS `course` (
 	`created_by` INT,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY(`id`),
+	UNIQUE KEY `unique_course_name` (`name`),
 	FOREIGN KEY(`created_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -73,6 +75,8 @@ CREATE TABLE IF NOT EXISTS `course_offering_teacher` (
     FOREIGN KEY (`offering_id`) REFERENCES `course_offering`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
     FOREIGN KEY (`teacher_id`) REFERENCES `teacher`(`person_id`) ON UPDATE NO ACTION ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE INDEX `idx_course_offering_teacher_teacher` ON `course_offering_teacher`(`teacher_id`);
 
 -- ============================================
 -- USER FOLLOWING (course_offering)
@@ -118,6 +122,29 @@ CREATE TABLE IF NOT EXISTS `note` (
 	FOREIGN KEY(`owner_id`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
 	FOREIGN KEY(`topic_id`) REFERENCES `topic`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+
+-- ============================================
+-- CORREZIONI / SUGGERIMENTI (Error reports / corrections)
+-- Permette agli utenti di segnalare un punto errato indicando file/linea/pezzo
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS `correction` (
+	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
+	`reported_by` INT NULL,
+	`note_id` INT NOT NULL COMMENT 'Nota a cui si riferisce la segnalazione',
+	`file_index` INT NOT NULL DEFAULT 0 COMMENT 'Indice 1-based del file nella nota (0 = nessun file specificato)',
+	`line_number` INT NULL COMMENT 'Numero di linea, se applicabile',
+	`snippet` TEXT NULL COMMENT 'Porzione di testo/pezzo incriminato (se utile)',
+	`message` TEXT NOT NULL COMMENT 'Descrizione di cosa c\'e\' di sbagliato',
+	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	`resolved` BOOLEAN NOT NULL DEFAULT FALSE,
+	`resolved_at` TIMESTAMP NULL DEFAULT NULL,
+	PRIMARY KEY(`id`),
+	FOREIGN KEY(`reported_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
+	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 
 -- ============================================
 -- FILE MANAGEMENT
