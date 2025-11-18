@@ -100,6 +100,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </div>
             <button type="submit" class="btn btn-primary w-100 btn-lg">Login</button>
         </form>
+        <p class="text-center mt-3 mb-0">
+            Don't have an account?
+            <a href="register.php">Register</a>
+        </p>
+
         <p class="text-center text-muted mt-4 mb-0">© 2025 UniNotes - All Rights Reserved</p>
     </div>
 

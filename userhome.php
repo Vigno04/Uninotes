@@ -19,7 +19,7 @@ if (!isset($_SESSION['person_id'])) {
 <body>
     <div class="container">
         <div class="home-card mx-auto col-11 col-md-8 col-lg-6 text-center">
-            <h1 class="welcome-text">Hello, <strong><?php echo htmlspecialchars($_SESSION["username"]); ?></strong>!</h1>
+            <h1 class="welcome-text">Hello, <strong><?php echo htmlspecialchars($_SESSION["name"]); ?></strong>!</h1>
             <span class="role-badge badge bg-success text-white">User Account</span>
             <hr>
             <p class="lead">Welcome to your personal dashboard.</p>
