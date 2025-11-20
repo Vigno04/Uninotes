@@ -1,16 +1,5 @@
 <?php
-session_start();
-
-// Connessione al database UniNotes
-$host = "localhost";
-$user = "root";
-$password = "";        // la tua password MySQL
-$dbname = "uninotes";  // nome del database dove hai importato lo schema
-
-$conn = mysqli_connect($host, $user, $password, $dbname);
-if ($conn === false) {
-    die("Connection error: " . mysqli_connect_error());
-}
+require_once("bootstrap.php");
 
 $message = "";
 

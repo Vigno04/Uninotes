@@ -1,20 +1,5 @@
 <?php
-session_start();
-if (!isset($_SESSION['person_id']) || $_SESSION['role'] !== 'admin') {
-    header('Location: login.php');
-    exit;
-}
-
-// Connessione al DB (stessa di login / register / userhome)
-$host = "localhost";
-$user = "root";
-$password = "";
-$dbname = "uninotes";
-
-$conn = mysqli_connect($host, $user, $password, $dbname);
-if ($conn === false) {
-    die("Connection error: " . mysqli_connect_error());
-}
+require_once("bootstrap.php");
 
 $personId = $_SESSION['person_id'];
 

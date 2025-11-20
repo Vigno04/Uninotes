@@ -1,16 +1,5 @@
 <?php
-session_start();
-
-// SAME connection as in login.php
-$host = "localhost";
-$user = "root";
-$password = "";
-$dbname = "uninotes";
-
-$conn = mysqli_connect($host, $user, $password, $dbname);
-if ($conn === false) {
-    die("Connection error: " . mysqli_connect_error());
-}
+require_once("bootstrap.php");
 
 $message = "";
 
