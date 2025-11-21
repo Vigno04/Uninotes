@@ -53,12 +53,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 mysqli_stmt_execute($update);
             }
 
-            if ($row["role"] === "admin") {
-                header("Location: adminhome.php");
-            } else {
-                header("Location: userhome.php");
-            }
+            // TODO: cambiare e mettere router
+            
+            header("Location: home.php");
             exit();
+            
         } else {
             $message = '<div class="alert alert-danger">Email o password errate.</div>';
         }

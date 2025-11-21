@@ -1,17 +1,17 @@
 <?php
 require_once("bootstrap.php");
+require_once("utils/router.php");
 
-if (isset($_SESSION['username'])) {
-    if (isset($_SESSION['usertype']) && $_SESSION['usertype'] === 'admin') {
-        header('Location: adminhome.php');
-        exit();
-    } else {
-        header('Location: userhome.php');
-        exit();
-    }
-} else {
-    header('Location: login.php');
-    exit();
+if (!isset($router)) {
+    $router = new Router();
 }
+$route = $router->getRoute();
 
+$templateParams["main-content"] = $route["file"];
+$templateParams["title"] = $route["title"];
+
+// qui potresti anche decidere contenuti diversi per admin/user
+// $templateParams["nome"] = $_SESSION['usertype'] === 'admin' ? "home-admin.php" : "home-user.php";
+
+require("login.php");
 ?>
