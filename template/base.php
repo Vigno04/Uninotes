@@ -2,7 +2,9 @@
 // niente bootstrap qui: è già incluso in index.php
 $currentPage = $_GET['page'] ?? 'home';
 $isAdmin     = isset($_SESSION['role']) && $_SESSION['role'] === 'admin';
-$profilePage = $isAdmin ? 'adminaccount' : 'useraccount';
+//$profilePage = $isAdmin ? 'adminaccount' : 'useraccount';
+$profilePage = 'account';
+
 ?>
 <!DOCTYPE html>
 <html lang="it">
@@ -38,7 +40,7 @@ $profilePage = $isAdmin ? 'adminaccount' : 'useraccount';
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo in_array($currentPage, ['useraccount','adminaccount']) ? 'active' : ''; ?>"
+                    <a class="nav-link <?php echo $currentPage === 'account' ? 'active' : ''; ?>"
                        href="index.php?page=<?php echo $profilePage; ?>">
                         Profilo
                     </a>
@@ -46,8 +48,8 @@ $profilePage = $isAdmin ? 'adminaccount' : 'useraccount';
 
                 <?php if ($isAdmin): ?>
                     <li class="nav-item">
-                        <a class="nav-link <?php echo $currentPage === 'adminaccount' ? 'active' : ''; ?>"
-                           href="index.php?page=adminaccount">
+                        <a class="nav-link <?php echo $currentPage === 'admindashboard' ? 'active' : ''; ?>"
+                           href="index.php?page=admindashboard">
                             Admin
                         </a>
                     </li>

@@ -6,13 +6,13 @@ class Router
             'file'  => 'home.php',
             'title' => 'Uninotes',
         ],
-        'useraccount' => [
-            'file'  => 'userhome.php',
-            'title' => 'Uninotes - Account',
+        'account' => [
+            'file'  => 'account.php',
+            'title' => 'Uninotes - Profilo',
         ],
-        'adminaccount' => [
-            'file'  => 'adminhome.php',
-            'title' => 'Uninotes - Admin Dashboard',
+        'admindashboard'=> [
+            'file'=> 'admindashboard.php',
+            'title'=> 'Uninotes- Admin Dashboard',
         ],
         'login' => [
             'file'  => 'login.php',

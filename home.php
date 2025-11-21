@@ -448,7 +448,7 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                     <?php endif; ?>
                 </div>
             </div>
-
+            <!--
             <?php if ($isAdmin): ?>
                 <div class="mt-3 d-grid">
                     <a href="index.php?page=adminaccount" class="btn btn-outline-primary btn-sm">
@@ -456,6 +456,7 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                     </a>
                 </div>
             <?php endif; ?>
+            -->
         </div>
     </div>
 </div>
