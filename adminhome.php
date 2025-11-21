@@ -61,88 +61,77 @@ if ($res) $stats['notes'] = mysqli_fetch_assoc($res)['c'];
 $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM correction WHERE resolved = 0");
 if ($res) $stats['corrections'] = mysqli_fetch_assoc($res)['c'];
 ?>
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Admin Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
-</head>
-<body class="bg-light">
-    <div class="container py-5">
-        <div class="home-card mx-auto col-12 col-lg-8 bg-white rounded-4 shadow-sm p-4 p-md-5">
-            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-3">
-                <div class="d-flex align-items-center gap-3">
-                    <img src="<?php echo htmlspecialchars($profilePicture); ?>"
-                         alt="Admin avatar"
-                         class="profile-avatar-lg rounded-circle">
-                    <div>
-                        <h1 class="h4 mb-1">
-                            Welcome, <strong><?php echo htmlspecialchars($admin['name']); ?></strong>!
-                        </h1>
-                        <span class="badge bg-danger">Administrator</span>
-                        <p class="mb-0 text-muted small">
-                            <?php echo htmlspecialchars($email); ?>
-                        </p>
-                    </div>
-                </div>
-                <a href="logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
-            </div>
 
-            <hr>
-
-            <div class="row g-3 mb-4">
-                <div class="col-6 col-md-3">
-                    <div class="stat-card text-center p-3 rounded-3 bg-light">
-                        <div class="small text-muted">Users</div>
-                        <div class="fs-4 fw-semibold"><?php echo (int)$stats['users']; ?></div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card text-center p-3 rounded-3 bg-light">
-                        <div class="small text-muted">Courses</div>
-                        <div class="fs-4 fw-semibold"><?php echo (int)$stats['courses']; ?></div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card text-center p-3 rounded-3 bg-light">
-                        <div class="small text-muted">Notes</div>
-                        <div class="fs-4 fw-semibold"><?php echo (int)$stats['notes']; ?></div>
-                    </div>
-                </div>
-                <div class="col-6 col-md-3">
-                    <div class="stat-card text-center p-3 rounded-3 bg-light">
-                        <div class="small text-muted">Open reports</div>
-                        <div class="fs-4 fw-semibold"><?php echo (int)$stats['corrections']; ?></div>
-                    </div>
+<div class="container py-5">
+    <div class="home-card mx-auto col-12 col-lg-8 bg-white rounded-4 shadow-sm p-4 p-md-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start gap-3 mb-3">
+            <div class="d-flex align-items-center gap-3">
+                <img src="<?php echo htmlspecialchars($profilePicture); ?>"
+                        alt="Admin avatar"
+                        class="profile-avatar-lg rounded-circle">
+                <div>
+                    <h1 class="h4 mb-1">
+                        Welcome, <strong><?php echo htmlspecialchars($admin['name']); ?></strong>!
+                    </h1>
+                    <span class="badge bg-danger">Administrator</span>
+                    <p class="mb-0 text-muted small">
+                        <?php echo htmlspecialchars($email); ?>
+                    </p>
                 </div>
             </div>
+            <a href="logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
 
-            <div class="mb-4 small text-muted">
-                <p class="mb-1">
-                    <strong>Member since:</strong>
-                    <?php echo htmlspecialchars(date('d/m/Y', strtotime($created))); ?>
-                </p>
-                <p class="mb-0">
-                    <strong>Last login:</strong>
-                    <?php echo $lastLogin ? htmlspecialchars(date('d/m/Y H:i', strtotime($lastLogin))) : 'First login'; ?>
-                </p>
+        <hr>
+
+        <div class="row g-3 mb-4">
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center p-3 rounded-3 bg-light">
+                    <div class="small text-muted">Users</div>
+                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['users']; ?></div>
+                </div>
             </div>
-
-            <div class="d-grid gap-2 d-md-flex">
-                <a href="#" class="btn btn-primary disabled" aria-disabled="true">
-                    Manage users (coming soon)
-                </a>
-                <a href="#" class="btn btn-outline-primary disabled" aria-disabled="true">
-                    Manage courses (coming soon)
-                </a>
-                <a href="#" class="btn btn-outline-secondary disabled" aria-disabled="true">
-                    View reports (coming soon)
-                </a>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center p-3 rounded-3 bg-light">
+                    <div class="small text-muted">Courses</div>
+                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['courses']; ?></div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center p-3 rounded-3 bg-light">
+                    <div class="small text-muted">Notes</div>
+                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['notes']; ?></div>
+                </div>
+            </div>
+            <div class="col-6 col-md-3">
+                <div class="stat-card text-center p-3 rounded-3 bg-light">
+                    <div class="small text-muted">Open reports</div>
+                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['corrections']; ?></div>
+                </div>
             </div>
         </div>
+
+        <div class="mb-4 small text-muted">
+            <p class="mb-1">
+                <strong>Member since:</strong>
+                <?php echo htmlspecialchars(date('d/m/Y', strtotime($created))); ?>
+            </p>
+            <p class="mb-0">
+                <strong>Last login:</strong>
+                <?php echo $lastLogin ? htmlspecialchars(date('d/m/Y H:i', strtotime($lastLogin))) : 'First login'; ?>
+            </p>
+        </div>
+
+        <div class="d-grid gap-2 d-md-flex">
+            <a href="#" class="btn btn-primary disabled" aria-disabled="true">
+                Manage users (coming soon)
+            </a>
+            <a href="#" class="btn btn-outline-primary disabled" aria-disabled="true">
+                Manage courses (coming soon)
+            </a>
+            <a href="#" class="btn btn-outline-secondary disabled" aria-disabled="true">
+                View reports (coming soon)
+            </a>
+        </div>
     </div>
-</body>
-</html>
+</div>
