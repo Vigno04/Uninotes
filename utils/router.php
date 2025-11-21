@@ -18,10 +18,6 @@ class Router
             'file'  => 'login.php',
             'title' => 'Uninotes - Login',
         ],
-        'search'=> [
-            'file'=> 'search.php',
-            'title'=> 'Uninotes - Cerca Appunti',
-        ],
     ];
 
     public function getRoute()

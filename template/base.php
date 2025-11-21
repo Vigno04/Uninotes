@@ -32,12 +32,6 @@ $profilePage = $isAdmin ? 'adminaccount' : 'useraccount';
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'search' ? 'active' : ''; ?>"
-                       href="index.php?page=search">
-                        Cerca
-                    </a>
-                </li>
-                <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'upload' ? 'active' : ''; ?>"
                        href="index.php?page=upload">
                         Carica
