@@ -8,7 +8,45 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
-// Ricerca semplice per nome / email
+$currentAdminId = (int)$_SESSION['person_id'];
+
+// --- GESTIONE AZIONI POST (role, attiva/disattiva) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['user_id'])) {
+    $action = $_POST['action'];
+    $userId = (int)$_POST['user_id'];
+
+    // Per sicurezza: non permettere a un admin di disattivare se stesso
+    $isSelf = ($userId === $currentAdminId);
+
+    if ($action === 'make_admin' && !$isSelf) {
+        $stmt = mysqli_prepare($conn, "UPDATE user SET role = 'admin' WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    } elseif ($action === 'make_user' && !$isSelf) {
+        $stmt = mysqli_prepare($conn, "UPDATE user SET role = 'user' WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    } elseif ($action === 'deactivate' && !$isSelf) {
+        $stmt = mysqli_prepare($conn, "UPDATE user SET deleted_at = NOW() WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    } elseif ($action === 'reactivate') {
+        // Riattivare se stessi va bene (es. in futuro con più admin)
+        $stmt = mysqli_prepare($conn, "UPDATE user SET deleted_at = NULL WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    // PRG pattern: redirect dopo il POST
+    header('Location: index.php?page=manage_users');
+    exit;
+}
+
+// --- RICERCA SEMPLICE ---
 $search = trim($_GET['q'] ?? '');
 
 $params = [];
@@ -28,12 +66,13 @@ $sql = "
         u.role,
         u.created_at AS user_created,
         u.last_login,
+        u.deleted_at,
         COUNT(n.id) AS note_count
     FROM person p
     JOIN user u ON p.id = u.person_id
     LEFT JOIN note n ON n.owner_id = u.person_id
     $where
-    GROUP BY p.id, p.name, p.surname, p.email, u.role, u.created_at, u.last_login
+    GROUP BY p.id, p.name, p.surname, p.email, u.role, u.created_at, u.last_login, u.deleted_at
     ORDER BY 
         (u.role = 'admin') DESC,   -- prima gli admin
         p.surname,
@@ -65,7 +104,7 @@ if ($result) {
                 <div class="card-body p-4 p-lg-5">
                     <h1 class="h4 mb-3">Manage users</h1>
                     <p class="text-muted mb-4">
-                        View all UniNotes accounts. In a future version you’ll be able to edit roles and disable accounts.
+                        View all UniNotes accounts. You can change roles and activate/deactivate users.
                     </p>
 
                     <!-- Barra di ricerca -->
@@ -102,20 +141,34 @@ if ($result) {
                                         <th>Name</th>
                                         <th>Email</th>
                                         <th>Role</th>
+                                        <th>Status</th>
                                         <th>Notes</th>
                                         <th>Joined</th>
                                         <th>Last login</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <?php foreach ($users as $u): ?>
-                                        <tr>
+                                        <?php
+                                            $isDeleted = !is_null($u['deleted_at']);
+                                            $isAdmin   = ($u['role'] === 'admin');
+                                            $isSelfRow = ($u['id'] == $currentAdminId);
+                                        ?>
+                                        <tr class="<?php echo $isDeleted ? 'table-light text-muted' : ''; ?>">
                                             <td><?php echo htmlspecialchars($u['name'] . ' ' . $u['surname']); ?></td>
                                             <td><?php echo htmlspecialchars($u['email']); ?></td>
                                             <td>
-                                                <span class="badge bg-<?php echo $u['role'] === 'admin' ? 'danger' : 'secondary'; ?>">
+                                                <span class="badge bg-<?php echo $isAdmin ? 'danger' : 'secondary'; ?>">
                                                     <?php echo htmlspecialchars($u['role']); ?>
                                                 </span>
+                                            </td>
+                                            <td>
+                                                <?php if ($isDeleted): ?>
+                                                    <span class="badge bg-secondary">Disabled</span>
+                                                <?php else: ?>
+                                                    <span class="badge bg-success">Active</span>
+                                                <?php endif; ?>
                                             </td>
                                             <td><?php echo (int)$u['note_count']; ?></td>
                                             <td>
@@ -129,6 +182,45 @@ if ($result) {
                                                     echo '<span class="text-muted small">Never</span>';
                                                 }
                                                 ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <div class="d-inline-flex gap-1">
+
+                                                    <!-- Toggle ruolo -->
+                                                    <?php if (!$isSelfRow): ?>
+                                                        <form method="post" class="d-inline">
+                                                            <input type="hidden" name="user_id" value="<?php echo (int)$u['id']; ?>">
+                                                            <?php if ($isAdmin): ?>
+                                                                <input type="hidden" name="action" value="make_user">
+                                                                <button type="submit" class="btn btn-outline-secondary btn-sm">
+                                                                    Make user
+                                                                </button>
+                                                            <?php else: ?>
+                                                                <input type="hidden" name="action" value="make_admin">
+                                                                <button type="submit" class="btn btn-outline-warning btn-sm">
+                                                                    Make admin
+                                                                </button>
+                                                            <?php endif; ?>
+                                                        </form>
+                                                    <?php endif; ?>
+
+                                                    <!-- Attiva / disattiva -->
+                                                    <form method="post" class="d-inline">
+                                                        <input type="hidden" name="user_id" value="<?php echo (int)$u['id']; ?>">
+                                                        <?php if ($isDeleted): ?>
+                                                            <input type="hidden" name="action" value="reactivate">
+                                                            <button type="submit" class="btn btn-outline-success btn-sm">
+                                                                Reactivate
+                                                            </button>
+                                                        <?php elseif (!$isSelfRow): ?>
+                                                            <input type="hidden" name="action" value="deactivate">
+                                                            <button type="submit" class="btn btn-outline-danger btn-sm">
+                                                                Disable
+                                                            </button>
+                                                        <?php endif; ?>
+                                                    </form>
+
+                                                </div>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>

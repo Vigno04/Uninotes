@@ -7,7 +7,28 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
-// Recupero ultimi 20 report (prima gli aperti, poi i risolti)
+// --- AZIONE POST: segna come risolto ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['report_id'])) {
+    if ($_POST['action'] === 'resolve') {
+        $reportId = (int)$_POST['report_id'];
+
+        $stmt = mysqli_prepare($conn, "
+            UPDATE correction
+            SET resolved = 1,
+                resolved_at = NOW()
+            WHERE id = ?
+        ");
+        mysqli_stmt_bind_param($stmt, "i", $reportId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    // redirect per evitare il resubmit
+    header('Location: index.php?page=view_reports');
+    exit;
+}
+
+// --- LETTURA REPORT DAL DB ---
 $sql = "
     SELECT 
         c.id,
@@ -47,7 +68,7 @@ if ($result) {
                 <div class="card-body p-4 p-lg-5">
                     <h1 class="h4 mb-2">Reports & corrections</h1>
                     <p class="text-muted mb-4">
-                        Review error reports sent by students and teachers. For now this page is read-only.
+                        Review error reports sent by students and teachers.
                     </p>
 
                     <?php if (empty($reports)): ?>
@@ -62,6 +83,7 @@ if ($result) {
                                         <th>Reported by</th>
                                         <th>Status</th>
                                         <th>Date</th>
+                                        <th class="text-end">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -106,6 +128,19 @@ if ($result) {
                                             </td>
                                             <td class="small">
                                                 <?php echo htmlspecialchars(date('d/m/Y H:i', strtotime($r['created_at']))); ?>
+                                            </td>
+                                            <td class="text-end">
+                                                <?php if (!$r['resolved']): ?>
+                                                    <form method="post" class="d-inline">
+                                                        <input type="hidden" name="report_id" value="<?php echo (int)$r['id']; ?>">
+                                                        <input type="hidden" name="action" value="resolve">
+                                                        <button type="submit" class="btn btn-outline-success btn-sm">
+                                                            Mark as resolved
+                                                        </button>
+                                                    </form>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">Already resolved</span>
+                                                <?php endif; ?>
                                             </td>
                                         </tr>
                                     <?php endforeach; ?>
