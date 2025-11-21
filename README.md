@@ -57,3 +57,8 @@ L’obiettivo è fornire un servizio utile e accessibile, che favorisca la colla
 1. Clonare o scaricare il repository:
    ```bash
    git clone https://github.com/Vigno04/uninotes.git
+
+---
+## TODO:
+- Aggiungere notifiche
+- Aggiungere grafici nella parte admin

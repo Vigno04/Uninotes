@@ -18,6 +18,10 @@ class Router
             'file'  => 'login.php',
             'title' => 'Uninotes - Login',
         ],
+        'upload'=> [
+            'file'=> 'upload.php',
+            'title'=> 'Uninotes - Carica Appunti',
+            ],
     ];
 
     public function getRoute()
