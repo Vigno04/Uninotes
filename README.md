@@ -63,3 +63,4 @@ L’obiettivo è fornire un servizio utile e accessibile, che favorisca la colla
 - Aggiungere notifiche
 - Aggiungere grafici nella parte admin
 - Far si che adminhome e userhome riutilizzino la stessa base, dato che sono molto simili
+- Fare un file dove popolare il database

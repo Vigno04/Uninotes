@@ -14,6 +14,18 @@ class Router
             'file'=> 'admindashboard.php',
             'title'=> 'Uninotes- Admin Dashboard',
         ],
+        'manage_courses'=> [
+            'file'=> 'manage_courses.php',
+            'title'=> 'Uninotes - Corsi',
+        ],
+        'manage_users'=> [
+            'file'=> 'manage_users.php',
+            'title'=> 'Uninotes - Users',
+        ],
+        'view_reports'=> [
+            'file'=> 'view_reports.php',
+            'title'=> 'Uninotes - Reports',
+        ],
         'login' => [
             'file'  => 'login.php',
             'title' => 'Uninotes - Login',

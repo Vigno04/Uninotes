@@ -231,14 +231,14 @@ if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
                     </div>
 
                     <div class="d-grid gap-2 d-md-flex mb-4">
-                        <a href="#" class="btn btn-primary disabled" aria-disabled="true">
-                            Manage users (coming soon)
+                        <a href="index.php?page=manage_users" class="btn btn-primary">
+                            Manage users
                         </a>
-                        <a href="#" class="btn btn-outline-primary disabled" aria-disabled="true">
-                            Manage courses (coming soon)
+                        <a href="index.php?page=manage_courses" class="btn btn-outline-primary">
+                            Manage courses
                         </a>
-                        <a href="#" class="btn btn-outline-secondary disabled" aria-disabled="true">
-                            View reports (coming soon)
+                        <a href="index.php?page=view_reports" class="btn btn-outline-secondary">
+                            View reports
                         </a>
                     </div>
 
