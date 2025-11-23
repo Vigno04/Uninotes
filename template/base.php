@@ -64,7 +64,11 @@ $profilePage = 'account';
     <div class="container">
         <?php
         if (!empty($templateParams["main-content"])) {
-            require $templateParams["main-content"];   // QUI entra home.php, userhome.php, ecc.
+            if (file_exists($templateParams["main-content"])) {
+                require $templateParams["main-content"];
+            } else {
+                echo $templateParams["main-content"];
+            }
         } else {
             echo "<p>Nessun contenuto.</p>";
         }

@@ -73,15 +73,18 @@ if ($id !== null && is_numeric($id)) {
             $htmlContent .= $fileList;
         }
         
-        $templateParams = ["title" => "Nota"];
+        ob_start();
         include("template/note.php");
+        $content = ob_get_clean();
+        
+        $templateParams = ["title" => "Nota", "main-content" => $content];
     } else {
-        $templateParams = ["title" => "Nota non trovata"];
-        echo "<div class='container mt-5'><h1>Nota non trovata</h1></div>";
+        $content = "<div class='container mt-5'><h1>Nota non trovata</h1></div>";
+        $templateParams = ["title" => "Nota non trovata", "main-content" => $content];
     }
 } else {
-    $templateParams = ["title" => "ID non valido"];
-    echo "<div class='container mt-5'><h1>ID non valido</h1></div>";
+    $content = "<div class='container mt-5'><h1>ID non valido</h1></div>";
+    $templateParams = ["title" => "ID non valido", "main-content" => $content];
 }
 
 require("template/base.php");
