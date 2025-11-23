@@ -1,0 +1,123 @@
+body.auth-page {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(180deg, #eef3ff 0%, #f5f7ff 40%, #e6f0ff 100%);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.auth-card-wrapper {
+    max-width: 420px;
+    width: 100%;
+}
+
+.auth-card {
+    background: #ffffff;
+    border-radius: 22px;
+    box-shadow: 0 22px 60px rgba(15, 23, 42, 0.12);
+    padding: 2.5rem 2rem 2.5rem;
+}
+
+.brand-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #2563eb, #4f46e5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin: 0 auto 0.75rem;
+    padding: 8px;
+}
+
+.brand-title {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.brand-subtitle {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.auth-heading {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.auth-subheading {
+    font-size: 0.9rem;
+    color: #6b7280;
+}
+
+.form-control {
+    border-radius: 0.75rem;
+    border-color: #e5e7eb;
+}
+
+.form-control:focus {
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+    border-color: #2563eb;
+}
+
+.btn-primary.auth-submit {
+    border-radius: 999px;
+    background: linear-gradient(90deg, #2563eb, #4f46e5);
+    border: none;
+    font-weight: 500;
+}
+
+.brand-icon img {
+    /* Make the SVG appear white and slightly larger inside the blue square */
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+    filter: brightness(0) invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.08));
+}
+
+.btn-outline-primary.auth-secondary {
+    border-radius: 999px;
+    padding-top: 0.55rem;
+    padding-bottom: 0.55rem;
+}
+
+.auth-footer-text {
+    font-size: 0.78rem;
+    color: #6b7280;
+}
+
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1rem 0;
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: "";
+    flex: 1;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.auth-divider span {
+    padding: 0 0.75rem;
+}
+
+.auth-muted-link {
+    font-size: 0.85rem;
+}
+
+@media (max-width: 576px) {
+    .auth-card-wrapper {
+        max-width: 360px;
+    }
+
+    .auth-card {
+        padding-inline: 1.5rem;
+    }
+}
