@@ -55,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
             // TODO: cambiare e mettere router
             
-            header("Location: home.php");
+            header("Location: index.php?page=home");
             exit();
             
         } else {

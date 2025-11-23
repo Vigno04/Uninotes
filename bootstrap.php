@@ -18,3 +18,7 @@ mysqli_set_charset($conn, "utf8mb4");
 // opzionale: costante per la cartella upload
 define("UPLOAD_DIR", "./upload/");
 ?>
+
+<!-- TODO: forse togliere? -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
