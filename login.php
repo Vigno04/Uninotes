@@ -73,27 +73,49 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
 </head>
-<body class="d-flex align-items-center justify-content-center">
-    <div class="login-card col-11 col-md-6 col-lg-4">
-        <h2 class="text-center mb-4 fw-light">Welcome Back</h2>
-        <?= $message ?>
-        <form action="" method="POST">
-            <div class="mb-3">
-                <label class="form-label">Email</label>
-                <input type="email" name="username" class="form-control form-control-lg" required autofocus>
+<body class="auth-page">
+    <div class="auth-card-wrapper px-3 px-sm-0">
+        <div class="auth-card mx-auto">
+            <div class="text-center mb-4">
+                <div class="brand-icon mb-2">
+                    <img src="assets/book-open.svg" alt="UniNotes" class="img-fluid" style="max-width: 36px;">
+                </div>
+                <div class="brand-title">UniNotes</div>
+                <div class="brand-subtitle">Share knowledge, ace together</div>
             </div>
-            <div class="mb-4">
-                <label class="form-label">Password</label>
-                <input type="password" name="password" class="form-control form-control-lg" required>
-            </div>
-            <button type="submit" class="btn btn-primary w-100 btn-lg">Login</button>
-        </form>
-        <p class="text-center mt-3 mb-0">
-            Don't have an account?
-            <a href="register.php">Register</a>
-        </p>
 
-        <p class="text-center text-muted mt-4 mb-0">© 2025 UniNotes - All Rights Reserved</p>
+            <div class="mb-4">
+                <h2 class="auth-heading mb-1">Welcome back</h2>
+                <p class="auth-subheading mb-0">Enter your credentials to access your notes</p>
+            </div>
+
+            <?= $message ?>
+
+            <form action="" method="POST" class="mb-3">
+                <div class="mb-3">
+                    <label class="form-label small mb-1">Email</label>
+                    <input type="email" name="username" class="form-control" placeholder="student@university.edu" required autofocus>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label small mb-1">Password</label>
+                    <input type="password" name="password" class="form-control" placeholder="●●●●●●●●" required>
+                </div>
+
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="#" class="auth-muted-link text-decoration-none">Forgot password?</a>
+                </div>
+
+                <button type="submit" class="btn btn-primary auth-submit w-100">Sign In</button>
+            </form>
+
+            <div class="auth-divider"><span>or</span></div>
+
+            <button type="button" class="btn btn-outline-primary auth-secondary w-100 mb-1" onclick="window.location.href='register.php'">Create New Account</button>
+
+            <p class="auth-footer-text text-center mb-0 mt-3">
+                By continuing, you agree to UniNotes' Terms of Service and Privacy Policy
+            </p>
+        </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
