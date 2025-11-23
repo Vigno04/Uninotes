@@ -437,26 +437,19 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                         <p class="text-muted small mb-0">Non ci sono ancora corsi con appunti.</p>
                     <?php else: ?>
                         <ul class="list-unstyled mb-0">
+
                             <?php foreach ($popularCourses as $course): ?>
                                 <li class="mb-2">
                                     <a href="#" class="text-decoration-none">
-                                        <?php echo htmlspecialchars($course); ?>
+                                        <?php echo htmlspecialchars($course); ?> <!-- TODO: quando clicchi, refresha la home e fai vedere solo gli appunti di quel corso -->
                                     </a>
                                 </li>
                             <?php endforeach; ?>
+                            
                         </ul>
                     <?php endif; ?>
                 </div>
             </div>
-            <!--
-            <?php if ($isAdmin): ?>
-                <div class="mt-3 d-grid">
-                    <a href="index.php?page=adminaccount" class="btn btn-outline-primary btn-sm">
-                        Vai al pannello Admin
-                    </a>
-                </div>
-            <?php endif; ?>
-            -->
         </div>
     </div>
 </div>

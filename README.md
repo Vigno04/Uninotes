@@ -64,3 +64,4 @@ L’obiettivo è fornire un servizio utile e accessibile, che favorisca la colla
 - Fare un file dove popolare il database
 - Migliorare todo per dire come eseguire il progetto
 - Hashare la password
+- Prendere i corsi e altre info dal sito unibo!!!
