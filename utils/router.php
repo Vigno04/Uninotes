@@ -8,31 +8,31 @@ class Router
         ],
         'account' => [
             'file'  => 'account.php',
-            'title' => 'Uninotes - Profilo',
+            'title' => 'Profile - Uninotes',
         ],
         'admindashboard'=> [
             'file'=> 'admindashboard.php',
-            'title'=> 'Uninotes- Admin Dashboard',
+            'title'=> 'Admin Dashboard - Uninotes',
         ],
         'manage_courses'=> [
             'file'=> 'manage_courses.php',
-            'title'=> 'Uninotes - Corsi',
+            'title'=> 'Courses - Uninotes',
         ],
         'manage_users'=> [
             'file'=> 'manage_users.php',
-            'title'=> 'Uninotes - Users',
+            'title'=> 'Users - Uninotes',
         ],
         'view_reports'=> [
             'file'=> 'view_reports.php',
-            'title'=> 'Uninotes - Reports',
+            'title'=> 'Reports - Uninotes',
         ],
         'login' => [
             'file'  => 'login.php',
-            'title' => 'Uninotes - Login',
+            'title' => 'Login - Uninotes',
         ],
         'upload'=> [
             'file'=> 'upload.php',
-            'title'=> 'Uninotes - Carica Appunti',
+            'title'=> 'Upload Notes - Uninotes',
             ],
     ];
 

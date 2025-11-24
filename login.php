@@ -3,14 +3,17 @@ require_once("bootstrap.php");
 
 $message = "";
 
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    // In questo progetto usiamo l'email come "username"
-    $email    = trim($_POST['username'] ?? '');
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del metodo HTTP (form inviato o no)
+    // Lettura dati dal form
+    $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
+    // Validazione campi vuoti
     if ($email === '' || $password === '') {
         $message = '<div class="alert alert-danger">Inserisci email e password.</div>';
     } else {
+        // Preparazione della query
         // Cerco la persona per email e recupero anche i dati da user
         $sql = "
             SELECT 
@@ -26,20 +29,26 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             LIMIT 1
         ";
 
-        $stmt = mysqli_prepare($conn, $sql);
+        // Prepared statement con mysqli
+        $stmt = mysqli_prepare($conn, $sql); // TODO: cambia conn forse? ricontrolla in bootstrap.php
         if ($stmt === false) {
             die("Query error: " . mysqli_error($conn));
         }
 
+        // Bind del parametro ed esecuzione
         mysqli_stmt_bind_param($stmt, "s", $email);
         mysqli_stmt_execute($stmt);
         $result = mysqli_stmt_get_result($stmt);
         $row = mysqli_fetch_assoc($result);
 
-        // Per ora password in chiaro: confronto diretto
-        // (se poi userai password_hash, sostituisci con password_verify)
+        // TODO: hasha password
+        /* $row['password'] === $password -------------------> Confronto della password in chiaro */
+        /* password_verify($password, $row['password']) ----->  Confronto della password hashata*/
+        /* Nel DB salverei password_hash(...) */
         if ($row && $row['password'] === $password) {
-            // Login OK → salvo dati in sessione
+            // Login OK: salvo dati in sessione
+            // Uso la $_SESSION per tenere traccia dell’utente loggato.
+            // Per sapere chi e' loggato posso sempre usare $_SESSION in ogni pagina
             $_SESSION["person_id"] = $row["person_id"];
             $_SESSION["name"]      = $row["name"];
             $_SESSION["surname"]   = $row["surname"];
@@ -54,12 +63,12 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             }
 
             // TODO: cambiare e mettere router
-            
+            // Redirect dopo il login
             header("Location: index.php?page=home");
             exit();
-            
         } else {
-            $message = '<div class="alert alert-danger">Email o password errate.</div>';
+            // Se qualcosa va storto
+            $message = '<div class="alert alert-danger">Wrong email or password.</div>';
         }
     }
 }
@@ -88,18 +97,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 <h2 class="auth-heading mb-1">Welcome back</h2>
                 <p class="auth-subheading mb-0">Enter your credentials to access your notes</p>
             </div>
-
             <?= $message ?>
-
-            <form action="" method="POST" class="mb-3">
+            <form action="" method="POST" class="mb-3"> <!-- TODO: Forse si deve aggiungere un'action, magari authenticate.php -->
                 <div class="mb-3">
                     <label class="form-label small mb-1">Email</label>
-                    <input type="email" name="username" class="form-control" placeholder="student@university.edu" required autofocus>
+                    <input type="email" name="email" class="form-control" placeholder="student@university.edu" required autofocus>
                 </div>
+
                 <div class="mb-2">
                     <label class="form-label small mb-1">Password</label>
                     <input type="password" name="password" class="form-control" placeholder="●●●●●●●●" required>
                 </div>
+
 
                 <div class="d-flex justify-content-end mb-3">
                     <a href="#" class="auth-muted-link text-decoration-none">Forgot password?</a>
@@ -109,15 +118,18 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             </form>
 
             <div class="auth-divider"><span>or</span></div>
-
-            <button type="button" class="btn btn-outline-primary auth-secondary w-100 mb-1" onclick="window.location.href='register.php'">Create New Account</button>
-
+            <a href="register.php" class="btn btn-outline-primary auth-secondary w-100 mb-1" role="button">
+                Create New Account
+            </a>
             <p class="auth-footer-text text-center mb-0 mt-3">
                 By continuing, you agree to UniNotes' Terms of Service and Privacy Policy
             </p>
+
         </div>
     </div>
 
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Da aggiungere un altro scriptino... una funzione js -->
 </body>
 </html>
