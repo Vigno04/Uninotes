@@ -16,6 +16,28 @@ $currentPage = $_GET['page'] ?? 'useraccount';
 // altrimenti modalità profilo utente.
 $mode = ($isAdmin && $currentPage === 'adminaccount') ? 'admin' : 'user';
 
+// Per modificare le opzioni di profilo
+$updateMessage = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
+    $programme = trim($_POST['programme'] ?? '');
+    $bio       = trim($_POST['bio'] ?? '');
+
+    $updateSql = "UPDATE user SET programme = ?, bio = ? WHERE person_id = ?";
+    $updateStmt = mysqli_prepare($conn, $updateSql);
+    mysqli_stmt_bind_param($updateStmt, "ssi", $programme, $bio, $personId);
+
+    if (mysqli_stmt_execute($updateStmt)) {
+        $updateMessage = '<div class="alert alert-success mb-3">Profile updated successfully.</div>';
+    } else {
+        $updateMessage = '<div class="alert alert-danger mb-3">Error while updating profile.</div>';
+    }
+
+    mysqli_stmt_close($updateStmt);
+}
+
+
+
 // -------------------------
 // 1) Dati utente (comune ad admin e user)
 // -------------------------
@@ -95,7 +117,7 @@ if ($mode === 'admin') {
 <div class="container py-4 py-lg-5">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
-
+            <?php if (!empty($updateMessage)) echo $updateMessage; ?>
             <!-- HEADER PROFILO (comune) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
@@ -159,6 +181,7 @@ if ($mode === 'admin') {
                                 <label class="form-label small text-muted">First Name</label>
                                 <input type="text"
                                        class="form-control"
+                                       name="name"
                                        value="<?php echo htmlspecialchars($name); ?>"
                                        disabled>
                             </div>
@@ -166,6 +189,7 @@ if ($mode === 'admin') {
                                 <label class="form-label small text-muted">Last Name</label>
                                 <input type="text"
                                        class="form-control"
+                                       name="surname"
                                        value="<?php echo htmlspecialchars($surname); ?>"
                                        disabled>
                             </div>
@@ -176,6 +200,7 @@ if ($mode === 'admin') {
                                     <span class="input-group-text">📧</span>
                                     <input type="email"
                                            class="form-control"
+                                           name="email"
                                            value="<?php echo htmlspecialchars($email); ?>"
                                            disabled
                                            data-lock="true">
@@ -186,13 +211,18 @@ if ($mode === 'admin') {
                                 <label class="form-label small text-muted">Study Programme</label>
                                 <input type="text"
                                        class="form-control"
+                                       name="programme"
                                        value="<?php echo htmlspecialchars($programme); ?>"
                                        disabled>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label small text-muted">Bio</label>
-                                <textarea class="form-control" rows="3" cols="1" disabled><?php echo htmlspecialchars($bio); ?></textarea>
+                                <textarea class="form-control" 
+                                    rows="3" 
+                                    cols="1" 
+                                    name="bio"
+                                    disabled><?php echo htmlspecialchars($bio); ?></textarea>
                             </div>
 
                             <button type="submit"
