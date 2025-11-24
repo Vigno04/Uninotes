@@ -20,6 +20,8 @@ $mode = ($isAdmin && $currentPage === 'adminaccount') ? 'admin' : 'user';
 $updateMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
+    $name = trim($_POST['name'] ??'');
+    $surname = trim($_POST['surname'] ??'');
     $programme = trim($_POST['programme'] ?? '');
     $bio       = trim($_POST['bio'] ?? '');
 
@@ -98,6 +100,37 @@ $stats = [
     'notes'       => 0,
     'corrections' => 0,
 ];
+
+$activity = [
+    'uploaded'   => 0,
+    'downloaded' => 0,
+];
+
+// NOTE CARICATE (upload)
+$uploadSql = "SELECT COUNT(*) AS c FROM note WHERE owner_id = ?";
+$uploadStmt = mysqli_prepare($conn, $uploadSql);
+mysqli_stmt_bind_param($uploadStmt, "i", $personId);
+mysqli_stmt_execute($uploadStmt);
+$uploadRes = mysqli_stmt_get_result($uploadStmt);
+if ($uploadRow = mysqli_fetch_assoc($uploadRes)) {
+    $activity["uploaded"] = (int)$uploadRow["c"];
+}
+mysqli_stmt_close($uploadStmt);
+
+/*
+// NOTE SCARICATE (download) – qui assumo tabella note_downloads
+// TODO: TUTTO DA RIFATE
+// TODO: FARE PURE LA TABELLA!
+$downloadSql = "SELECT COUNT(*) AS c FROM note_downloads WHERE person_id = ?";
+$downloadStmt = mysqli_prepare($conn, $downloadSql);
+mysqli_stmt_bind_param($downloadStmt, "i", $personId);
+mysqli_stmt_execute($downloadStmt);
+$downloadRes = mysqli_stmt_get_result($downloadStmt);
+if ($downloadRow = mysqli_fetch_assoc($downloadRes)) {
+    $activity['downloaded'] = (int)$downloadRow['c'];
+}
+mysqli_stmt_close($downloadStmt);
+*/
 
 if ($mode === 'admin') {
     $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM user");
@@ -183,7 +216,8 @@ if ($mode === 'admin') {
                                        class="form-control"
                                        name="name"
                                        value="<?php echo htmlspecialchars($name); ?>"
-                                       disabled>
+                                       disabled
+                                       data-lock="true">
                             </div>
                             <div class="mb-3">
                                 <label class="form-label small text-muted">Last Name</label>
@@ -191,7 +225,8 @@ if ($mode === 'admin') {
                                        class="form-control"
                                        name="surname"
                                        value="<?php echo htmlspecialchars($surname); ?>"
-                                       disabled>
+                                       disabled
+                                       data-lock="true">
                             </div>
 
                             <div class="mb-3">
@@ -240,12 +275,19 @@ if ($mode === 'admin') {
                         <h2 class="h6 mb-2">Activity</h2>
                         <p class="text-muted small mb-4">Your contribution to UniNotes</p>
 
+                        <!--
+                        Prendiamo da note, owner_id che e' uguale a person_id da user,
+                        e contiamo quante volte compare.
+                        -->
+
                         <div class="row g-3">
                             <div class="col-12 col-md-6">
                                 <div class="border rounded-4 py-4 px-3 text-center bg-light">
                                     <div class="fs-2 mb-2">📘</div>
                                     <div class="fw-semibold">Notes Uploaded</div>
-                                    <div class="text-muted small">0</div>
+                                    <div class="text-muted small">
+                                        <?php echo (int)$activity['uploaded']; ?>
+                                    </div>
                                 </div>
                             </div>
                             <div class="col-12 col-md-6">
@@ -255,6 +297,18 @@ if ($mode === 'admin') {
                                     <div class="text-muted small">0</div>
                                 </div>
                             </div>
+
+                            <!--
+                            <div class="col-12 col-md-6">
+                                <div class="border rounded-4 py-4 px-3 text-center bg-light">
+                                    <div class="fs-2 mb-2">📥</div>
+                                    <div class="fw-semibold">Notes Downloaded</div>
+                                    <div class="text-muted small">
+                                        <?php echo (int)$activity['downloaded']; ?>
+                                    </div>
+                                </div>
+                            </div>
+                            --> 
                         </div>
                     </div>
                 </div>
