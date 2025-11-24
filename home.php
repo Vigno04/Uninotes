@@ -266,12 +266,12 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
             <div class="d-flex align-items-center gap-2">
                 <span class="fs-4">📘</span>
                 <div>
-                    <h1 class="h4 mb-1">Appunti</h1>
+                    <h1 class="h4 mb-1">Notes</h1>
                     <small class="text-muted">
                         <?php if ($searchTerm === '' && is_null($courseFilter)): ?>
-                            Ultimi materiali caricati sulla piattaforma
+                            Latest updated notes
                         <?php else: ?>
-                            Risultati filtrati 
+                            Filtered results 
                         <?php endif; ?>
                     </small>
                 </div>
@@ -292,14 +292,14 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                     type="text"
                     class="form-control"
                     name="q"
-                    placeholder="Cerca per titolo o contenuto..."
+                    placeholder="Search by title or content..."
                     value="<?php echo htmlspecialchars($searchTerm); ?>"
                 >
             </div>
 
             <div class="col-6 col-lg-2">
                 <select name="course_id" class="form-select">
-                    <option value="">Tutti i corsi</option>
+                    <option value="">All courses</option>
                     <?php foreach ($courseOptions as $course): ?>
                         <option value="<?php echo (int)$course['id']; ?>"
                             <?php echo ($courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
@@ -312,26 +312,26 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
             <div class="col-6 col-lg-2">
                 <select name="sort" class="form-select">
                     <option value="date" <?php echo $sort === 'date' ? 'selected' : ''; ?>>
-                        Più recenti
+                        Most recent
                     </option>
                     <option value="votes" <?php echo $sort === 'votes' ? 'selected' : ''; ?>>
-                        Più votati
+                        Most liked
                     </option>
                 </select>
             </div>
 
             <div class="col-12 col-lg-2 d-grid">
                 <button class="btn btn-primary" type="submit">
-                    Cerca
+                    Search
                 </button>
             </div>
         </form>
 
         <?php if ($searchTerm !== '' || !is_null($courseFilter)): ?>
             <p class="text-muted small mt-2 mb-0">
-                Trovati <?php echo $totalResults; ?> appunti.
+                Found <?php echo $totalResults; ?> notes.
                 <?php if ($totalPages > 1): ?>
-                    (Pagina <?php echo $currentPage; ?> di <?php echo $totalPages; ?>)
+                    (Page <?php echo $currentPage; ?> di <?php echo $totalPages; ?>)
                 <?php endif; ?>
             </p>
         <?php endif; ?>
@@ -339,10 +339,10 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
 
     <div class="row">
         <!-- Colonna principale con le card degli appunti -->
-        <div class="col-lg-9">
+        <div class="col-lg-12">
 
             <?php if (empty($recentNotes)): ?>
-                <p class="text-muted">Nessun appunto trovato.</p>
+                <p class="text-muted">No notes found.</p>
             <?php else: ?>
                 <?php foreach ($recentNotes as $note): ?>
                     <div class="card mb-3 border-0 shadow-sm rounded-4">
@@ -380,9 +380,6 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                                 </div>
 
                                 <div class="d-flex align-items-center gap-3">
-                                    <a href="#" class="text-decoration-none small">
-                                        👁 Visualizza
-                                    </a>
                                     <span class="small text-muted">
                                         ⬇ <?php echo (int)$note["downloads"]; ?>
                                     </span>
@@ -403,60 +400,99 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                                 <li class="page-item <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>">
                                     <a class="page-link"
                                        href="<?php echo $currentPage > 1 ? buildPageUrl($currentPage - 1, $searchTerm, $courseFilter, $sort) : '#'; ?>">
-                                        « Precedente
+                                        « Previous
                                     </a>
                                 </li>
 
                                 <li class="page-item disabled">
                                     <span class="page-link">
-                                        Pagina <?php echo $currentPage; ?> di <?php echo $totalPages; ?>
+                                        Page <?php echo $currentPage; ?> di <?php echo $totalPages; ?>
                                     </span>
                                 </li>
 
                                 <li class="page-item <?php echo $currentPage >= $totalPages ? 'disabled' : ''; ?>">
                                     <a class="page-link"
                                        href="<?php echo $currentPage < $totalPages ? buildPageUrl($currentPage + 1, $searchTerm, $courseFilter, $sort) : '#'; ?>">
-                                        Successiva »
+                                        Next »
                                     </a>
                                 </li>
                             </ul>
                         </nav>
                     <?php endif; ?>
                 <?php endif; ?>
-
             <?php endif; ?>
-
         </div>
 
-        <!-- Colonna laterale (corsi popolari) -->
+            <!-- Sezione All the courses -->
+            <hr class="my-5">
+            <div class="mb-4">
+                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fs-4">🎓</span>
+                        <div>
+                            <h2 class="h4 mb-1">All courses</h2>
+                            <small class="text-muted">
+                                Browse all courses that currently have published notes.
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <?php if (empty($courseOptions)): ?>
+                    <p class="text-muted">There are no courses with notes yet.</p>
+                <?php else: ?>
+                    <div class="row g-3">
+                        <?php foreach ($courseOptions as $course): ?>
+                            <div class="col-12 col-md-6 col-lg-4">
+                                <div class="card border-0 shadow-sm rounded-4 h-100">
+                                    <div class="card-body d-flex flex-column">
+                                        <h3 class="h6 mb-1">
+                                            <?php echo htmlspecialchars($course['name']); ?>
+                                        </h3>
+                                        <p class="text-muted small mb-3">
+                                            Study programme course
+                                        </p>
+
+                                        <div class="mt-auto d-flex justify-content-between align-items-center">
+                                            <a
+                                                href="<?php echo buildPageUrl(1, $searchTerm, (int)$course['id'], $sort); ?>"
+                                                class="small text-primary text-decoration-none"
+                                            >
+                                                View notes →
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </div>
+
+
+        <!-- Colonna laterale (corsi popolari) 
         <div class="col-lg-3 mt-4 mt-lg-0">
             <div class="card border-0 shadow-sm rounded-4">
                 <div class="card-body">
-                    <h2 class="h6 mb-3">Corsi popolari</h2>
+                    <h2 class="h6 mb-3">Popular courses</h2>
                     <?php if (empty($popularCourses)): ?>
-                        <p class="text-muted small mb-0">Non ci sono ancora corsi con appunti.</p>
+                        <p class="text-muted small mb-0">There are no notes for this course.</p>
                     <?php else: ?>
                         <ul class="list-unstyled mb-0">
+
                             <?php foreach ($popularCourses as $course): ?>
                                 <li class="mb-2">
                                     <a href="#" class="text-decoration-none">
-                                        <?php echo htmlspecialchars($course); ?>
-                                    </a>
+                                        <?php echo htmlspecialchars($course); ?> 
                                 </li>
                             <?php endforeach; ?>
+                            
                         </ul>
                     <?php endif; ?>
                 </div>
             </div>
-            <!--
-            <?php if ($isAdmin): ?>
-                <div class="mt-3 d-grid">
-                    <a href="index.php?page=adminaccount" class="btn btn-outline-primary btn-sm">
-                        Vai al pannello Admin
-                    </a>
-                </div>
-            <?php endif; ?>
-            -->
-        </div>
+            
+        </div> -->
+
     </div>
 </div>
