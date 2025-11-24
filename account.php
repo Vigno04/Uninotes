@@ -190,190 +190,112 @@ if ($mode === 'admin') {
                     </div>
                 </div>
             </div>
-
-            <?php if ($mode === 'user'): ?>
-
-                <!-- PROFILO UTENTE (stile mockup) -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4 p-lg-5">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                        <div>
-                            <h2 class="h5 mb-1">Personal Information</h2>
-                            <p class="text-muted small mb-0">Update your account details</p>
-                        </div>
-
-                        <button type="button"
-                                id="editProfileBtn"
-                                class="btn btn-outline-secondary btn-sm">
-                            Edit profile
-                        </button>
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="h5 mb-1">Personal Information</h2>
+                        <p class="text-muted small mb-0">Update your account details</p>
                     </div>
 
-                        <form id="profileForm" method="POST">
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">First Name</label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="name"
-                                       value="<?php echo htmlspecialchars($name); ?>"
-                                       disabled
-                                       data-lock="true">
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Last Name</label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="surname"
-                                       value="<?php echo htmlspecialchars($surname); ?>"
-                                       disabled
-                                       data-lock="true">
-                            </div>
+                    <button type="button"
+                            id="editProfileBtn"
+                            class="btn btn-outline-secondary btn-sm">
+                        Edit profile
+                    </button>
+                </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Email</label>
-                                <div class="input-group">
-                                    <span class="input-group-text">📧</span>
-                                    <input type="email"
-                                           class="form-control"
-                                           name="email"
-                                           value="<?php echo htmlspecialchars($email); ?>"
-                                           disabled
-                                           data-lock="true">
-                                </div>
-                            </div>
+                    <form id="profileForm" method="POST">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">First Name</label>
+                            <input type="text"
+                                    class="form-control"
+                                    name="name"
+                                    value="<?php echo htmlspecialchars($name); ?>"
+                                    disabled
+                                    data-lock="true">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Last Name</label>
+                            <input type="text"
+                                    class="form-control"
+                                    name="surname"
+                                    value="<?php echo htmlspecialchars($surname); ?>"
+                                    disabled
+                                    data-lock="true">
+                        </div>
 
-                            <div class="mb-3">
-                                <label class="form-label small text-muted">Study Programme</label>
-                                <input type="text"
-                                       class="form-control"
-                                       name="programme"
-                                       value="<?php echo htmlspecialchars($programme); ?>"
-                                       disabled>
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Email</label>
+                            <div class="input-group">
+                                <span class="input-group-text">📧</span>
+                                <input type="email"
+                                        class="form-control"
+                                        name="email"
+                                        value="<?php echo htmlspecialchars($email); ?>"
+                                        disabled
+                                        data-lock="true">
                             </div>
+                        </div>
 
-                            <div class="mb-4">
-                                <label class="form-label small text-muted">Bio</label>
-                                <textarea class="form-control" 
-                                    rows="3" 
-                                    cols="1" 
-                                    name="bio"
-                                    disabled><?php echo htmlspecialchars($bio); ?></textarea>
-                            </div>
-
-                            <button type="submit"
-                                    id="saveProfileBtn"
-                                    class="btn btn-primary w-100"
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Study Programme</label>
+                            <input type="text"
+                                    class="form-control"
+                                    name="programme"
+                                    value="<?php echo htmlspecialchars($programme); ?>"
                                     disabled>
-                                Save Changes
-                            </button>
-                        </form>
-                    </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="form-label small text-muted">Bio</label>
+                            <textarea class="form-control" 
+                                rows="3" 
+                                cols="1" 
+                                name="bio"
+                                disabled><?php echo htmlspecialchars($bio); ?></textarea>
+                        </div>
+
+                        <button type="submit"
+                                id="saveProfileBtn"
+                                class="btn btn-primary w-100"
+                                disabled>
+                            Save Changes
+                        </button>
+                    </form>
                 </div>
+            </div>
 
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4 p-lg-5">
-                        <h2 class="h6 mb-2">Activity</h2>
-                        <p class="text-muted small mb-4">Your contribution to UniNotes</p>
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h2 class="h6 mb-2">Activity</h2>
+                    <p class="text-muted small mb-4">Your contribution to UniNotes</p>
 
-                        <!--
-                        Prendiamo da note, owner_id che e' uguale a person_id da user,
-                        e contiamo quante volte compare.
-                        -->
+                    <!--
+                    Prendiamo da note, owner_id che e' uguale a person_id da user,
+                    e contiamo quante volte compare.
+                    -->
 
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <div class="border rounded-4 py-4 px-3 text-center bg-light">
-                                    <div class="fs-2 mb-2">📘</div>
-                                    <div class="fw-semibold">Notes Uploaded</div>
-                                    <div class="text-muted small">
-                                        <?php echo (int)$activity['uploaded']; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-12 col-md-6">
-                                <div class="border rounded-4 py-4 px-3 text-center bg-light">
-                                    <div class="fs-2 mb-2">📥</div>
-                                    <div class="fw-semibold">Notes Downloaded</div>
-                                    <div class="text-muted small">0</div>
-                                </div>
-                            </div>
-
-                            <!--
-                            <div class="col-12 col-md-6">
-                                <div class="border rounded-4 py-4 px-3 text-center bg-light">
-                                    <div class="fs-2 mb-2">📥</div>
-                                    <div class="fw-semibold">Notes Downloaded</div>
-                                    <div class="text-muted small">
-                                        <?php echo (int)$activity['downloaded']; ?>
-                                    </div>
-                                </div>
-                            </div>
-                            --> 
-                        </div>
-                    </div>
-                </div>
-
-            <?php elseif ($mode === 'admin'): ?>
-
-                <!-- DASHBOARD ADMIN riutilizzando gli stessi dati utente -->
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
-                    <div class="card-body p-4 p-lg-5">
-                        <h2 class="h5 mb-3">Admin Dashboard</h2>
-
-                        <div class="row g-3 mb-4">
-                            <div class="col-6 col-md-3">
-                                <div class="text-center p-3 rounded-3 bg-light">
-                                    <div class="small text-muted">Users</div>
-                                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['users']; ?></div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="text-center p-3 rounded-3 bg-light">
-                                    <div class="small text-muted">Courses</div>
-                                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['courses']; ?></div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="text-center p-3 rounded-3 bg-light">
-                                    <div class="small text-muted">Notes</div>
-                                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['notes']; ?></div>
-                                </div>
-                            </div>
-                            <div class="col-6 col-md-3">
-                                <div class="text-center p-3 rounded-3 bg-light">
-                                    <div class="small text-muted">Open reports</div>
-                                    <div class="fs-4 fw-semibold"><?php echo (int)$stats['corrections']; ?></div>
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <div class="border rounded-4 py-4 px-3 text-center bg-light">
+                                <div class="fs-2 mb-2">📘</div>
+                                <div class="fw-semibold">Notes Uploaded</div>
+                                <div class="text-muted small">
+                                    <?php echo (int)$activity['uploaded']; ?>
                                 </div>
                             </div>
                         </div>
-
-                        <div class="mb-4 small text-muted">
-                            <p class="mb-1">
-                                <strong>Member since:</strong>
-                                <?php echo htmlspecialchars(date('d/m/Y', strtotime($created))); ?>
-                            </p>
-                            <p class="mb-0">
-                                <strong>Last login:</strong>
-                                <?php echo $lastLogin
-                                    ? htmlspecialchars(date('d/m/Y H:i', strtotime($lastLogin)))
-                                    : 'First login'; ?>
-                            </p>
-                        </div>
-
-                        <div class="d-grid gap-2 d-md-flex">
-                            <a href="#" class="btn btn-primary disabled" aria-disabled="true">
-                                Manage users (coming soon)
-                            </a>
-                            <a href="#" class="btn btn-outline-primary disabled" aria-disabled="true">
-                                Manage courses (coming soon)
-                            </a>
-                            <a href="#" class="btn btn-outline-secondary disabled" aria-disabled="true">
-                                View reports (coming soon)
-                            </a>
+                        <div class="col-12 col-md-6">
+                            <div class="border rounded-4 py-4 px-3 text-center bg-light">
+                                <div class="fs-2 mb-2">📥</div>
+                                <div class="fw-semibold">Notes Downloaded</div>
+                                <div class="text-muted small">0</div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
         </div>
     </div>
 </div>

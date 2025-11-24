@@ -21,7 +21,7 @@ $sql = "
         p.surname,
         p.email,
         p.profile_picture,
-        p.created_at,
+        u.created_at,
         u.role,
         u.last_login
     FROM person p
