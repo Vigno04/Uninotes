@@ -20,19 +20,67 @@ $mode = ($isAdmin && $currentPage === 'adminaccount') ? 'admin' : 'user';
 $updateMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
+    // raccogli campi testuali
     $name = trim($_POST['name'] ??'');
     $surname = trim($_POST['surname'] ??'');
     $programme = trim($_POST['programme'] ?? '');
     $bio       = trim($_POST['bio'] ?? '');
 
+    // --- GESTIONE UPLOAD FOTO ---
+    $profilePictureUploaded = null;
+    if (!empty($_FILES['profile_picture']) && ($_FILES['profile_picture']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        // assicurati che la cartella esista
+        $profileDir = rtrim(UPLOAD_DIR, "/\\") . DIRECTORY_SEPARATOR . 'profile' . DIRECTORY_SEPARATOR;
+        if (!is_dir($profileDir)) {
+            mkdir($profileDir, 0755, true);
+        }
+
+        $file = $_FILES['profile_picture'];
+        if ($file['error'] === UPLOAD_ERR_OK) {
+            // validazioni
+            $maxSize = 2 * 1024 * 1024; // 2 MB
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mime = finfo_file($finfo, $file['tmp_name']);
+            finfo_close($finfo);
+
+            $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+            if (!isset($allowed[$mime])) {
+                $updateMessage = '<div class="alert alert-danger mb-3">Tipo file non consentito. Usa JPG/PNG/WEBP.</div>';
+            } elseif ($file['size'] > $maxSize) {
+                $updateMessage = '<div class="alert alert-danger mb-3">File troppo grande. Max 2MB.</div>';
+            } else {
+                $ext = $allowed[$mime];
+                $newName = 'profile_' . $personId . '_' . time() . '.' . $ext;
+                $dest = $profileDir . $newName;
+                if (move_uploaded_file($file['tmp_name'], $dest)) {
+                    // salva solo il percorso (senza query) nel DB
+                    $dbPath = 'upload/profile/' . $newName;
+
+                    $uStmt = mysqli_prepare($conn, "UPDATE person SET profile_picture = ? WHERE id = ?");
+                    mysqli_stmt_bind_param($uStmt, "si", $dbPath, $personId);
+                    mysqli_stmt_execute($uStmt);
+                    mysqli_stmt_close($uStmt);
+
+                    // imposta la variabile per il preview locale con bust di cache
+                    $profilePicture = $dbPath . '?v=' . time();
+                } else {
+                    $updateMessage = '<div class="alert alert-danger mb-3">Errore nel salvataggio del file.</div>';
+                }
+            }
+        } else {
+            $updateMessage = '<div class="alert alert-danger mb-3">Errore upload file (code '.$file['error'].').</div>';
+        }
+    }
+
+    // --- AGGIORNA CAMPI DI PROFILO (user) ---
     $updateSql = "UPDATE user SET programme = ?, bio = ? WHERE person_id = ?";
     $updateStmt = mysqli_prepare($conn, $updateSql);
     mysqli_stmt_bind_param($updateStmt, "ssi", $programme, $bio, $personId);
 
     if (mysqli_stmt_execute($updateStmt)) {
-        $updateMessage = '<div class="alert alert-success mb-3">Profile updated successfully.</div>';
+        $updateMessage = ($updateMessage ?? '') . '<div class="alert alert-success mb-3">Profile updated successfully.</div>';
     } else {
-        $updateMessage = '<div class="alert alert-danger mb-3">Error while updating profile.</div>';
+        $updateMessage = ($updateMessage ?? '') . '<div class="alert alert-danger mb-3">Error while updating profile.</div>';
     }
 
     mysqli_stmt_close($updateStmt);
@@ -82,10 +130,22 @@ $bio        = $userData['bio'] ?? '';
 $created   = $userData['created_at'];
 $lastLogin = $userData['last_login'];
 
-$profilePicture = $userData['profile_picture'];
-if (empty($profilePicture)) {
-    $profilePicture = 'https://via.placeholder.com/120?text=User';
+// profile picture: se esiste il percorso in DB, bustiamo la cache con filemtime
+$rawPic = trim((string)($userData['profile_picture'] ?? ''));
+if ($rawPic !== '') {
+    $serverPath = __DIR__ . '/' . $rawPic;
+    if (file_exists($serverPath)) {
+        $profilePicture = $rawPic . '?v=' . filemtime($serverPath);
+    } else {
+        // DB contiene percorso ma file non è presente: aggiungi timestamp per forzare reload
+        $profilePicture = $rawPic . '?v=' . time();
+    }
+} else {
+    $profilePicture = null; // userà le iniziali nella testata
 }
+
+// preview nel form (fallback placeholder)
+$previewSrc = $profilePicture ?? 'https://via.placeholder.com/120?text=User';
 
 $initials = strtoupper(
     mb_substr($userData['name'], 0, 1) . mb_substr($userData['surname'], 0, 1)
@@ -156,12 +216,17 @@ if ($mode === 'admin') {
                 <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
                     <div class="d-flex align-items-center gap-3 flex-grow-1">
 
-                        <div class="rounded-circle d-flex align-items-center justify-content-center"
-                             style="width:80px;height:80px;
-                                    background:linear-gradient(135deg,#4e54c8,#8f94fb);
-                                    color:#fff;font-size:1.6rem;font-weight:600;">
-                            <?php echo htmlspecialchars($initials); ?>
-                        </div>
+                        <?php if (!empty($profilePicture)): ?>
+                            <img src="<?php echo htmlspecialchars($profilePicture); ?>"
+                                 alt="profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+                        <?php else: ?>
+                            <div class="rounded-circle d-flex align-items-center justify-content-center"
+                                 style="width:80px;height:80px;
+                                        background:linear-gradient(135deg,#4e54c8,#8f94fb);
+                                        color:#fff;font-size:1.6rem;font-weight:600;">
+                                <?php echo htmlspecialchars($initials); ?>
+                            </div>
+                        <?php endif; ?>
 
                         <div>
                             <div class="fw-semibold mb-1">
@@ -205,7 +270,18 @@ if ($mode === 'admin') {
                     </button>
                 </div>
 
-                    <form id="profileForm" method="POST">
+                    <form id="profileForm" method="POST" enctype="multipart/form-data">
+                        <div class="mb-3">
+                            <label class="form-label small text-muted">Profile picture</label>
+                            <div class="d-flex align-items-center gap-3 mb-2">
+                                <img id="profilePreview" src="<?php echo htmlspecialchars($previewSrc); ?>"
+                                     alt="profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+                                <div>
+                                    <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" disabled>
+                                    <div class="small text-muted">JPG, PNG, WEBP — max 2MB</div>
+                                </div>
+                            </div>
+                        </div>
                         <div class="mb-3">
                             <label class="form-label small text-muted">First Name</label>
                             <input type="text"
@@ -305,6 +381,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const editBtn = document.getElementById('editProfileBtn');
     const form    = document.getElementById('profileForm');
     const saveBtn = document.getElementById('saveProfileBtn');
+    const fileInput = document.getElementById('profilePictureInput');
+    const preview = document.getElementById('profilePreview');
 
     if (!editBtn || !form || !saveBtn) {
         console.warn('Edit/profile elements not found');
@@ -318,19 +396,29 @@ document.addEventListener('DOMContentLoaded', function () {
         editing = !editing;
 
         fields.forEach(function (el) {
-            // quelli con data-lock="true" restano sempre disabilitati
             if (el.dataset.lock === 'true') return;
             el.disabled = !editing;
         });
 
+        // abilita/disabilita campo file separatamente (fileInput non ha data-lock)
+        if (fileInput) fileInput.disabled = !editing;
+
         saveBtn.disabled = !editing;
         editBtn.textContent = editing ? 'Cancel' : 'Edit profile';
 
-        // se premi "Cancel", ricarico i valori originali dal DB
         if (!editing) {
             window.location.reload();
         }
     });
+
+    if (fileInput && preview) {
+        fileInput.addEventListener('change', function (e) {
+            const f = fileInput.files[0];
+            if (!f) return;
+            const url = URL.createObjectURL(f);
+            preview.src = url;
+        });
+    }
 });
 </script>
 
