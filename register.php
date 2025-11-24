@@ -57,7 +57,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                     $_SESSION["email"]     = $email;
                     $_SESSION["role"]      = $role;
 
-                    header("Location: userhome.php");
+                    header("Location: home.php");
                     exit();
                 }
             }
@@ -74,7 +74,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
-<body class="d-flex align-items-center justify-content-center">
+<body class="d-flex align-items-center justify-content-center pt-5 pt-md-5 pt-lg-5">
     <div class="login-card col-11 col-md-6 col-lg-4">
         <h2 class="text-center mb-4 fw-light">Create your account</h2>
         <?= $message ?>

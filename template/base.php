@@ -36,13 +36,13 @@ $profilePage = 'account';
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'upload' ? 'active' : ''; ?>"
                        href="index.php?page=upload">
-                        Carica
+                        Upload
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'account' ? 'active' : ''; ?>"
                        href="index.php?page=<?php echo $profilePage; ?>">
-                        Profilo
+                        Account
                     </a>
                 </li>
 
@@ -69,7 +69,7 @@ $profilePage = 'account';
                 echo $templateParams["main-content"];
             }
         } else {
-            echo "<p>Nessun contenuto.</p>";
+            echo "<p>No content found.</p>";
         }
         ?>
     </div>
