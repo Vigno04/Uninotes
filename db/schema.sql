@@ -3,6 +3,14 @@
 -- Created: November 15, 2025
 
 -- ============================================
+-- DELETES AND RECREATES DB
+-- ============================================
+
+DROP SCHEMA IF EXISTS uninotes;
+CREATE DATABASE uninotes;
+USE uninotes;
+
+-- ============================================
 -- CORE ENTITIES
 -- ============================================
 
@@ -15,6 +23,12 @@ CREATE TABLE IF NOT EXISTS `person` (
 	PRIMARY KEY(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `programme` (
+	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` VARCHAR(255) NOT NULL UNIQUE,
+	PRIMARY KEY(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `user` (
 	`person_id` INT NOT NULL UNIQUE,
 	`password` VARCHAR(255) NOT NULL,
@@ -22,7 +36,6 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`programme` VARCHAR(255) NULL,
 	`bio` TEXT NULL,
 	`programme_id` INT NULL,
-	`bio` TEXT NULL,
 	`last_login` TIMESTAMP NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`deleted_at` TIMESTAMP NULL DEFAULT NULL,
@@ -39,12 +52,6 @@ CREATE TABLE IF NOT EXISTS `teacher` (
 	`personal_site` VARCHAR(255),
 	PRIMARY KEY(`person_id`),
 	FOREIGN KEY(`person_id`) REFERENCES `person`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `programme` (
-	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
-	`name` VARCHAR(255) NOT NULL UNIQUE,
-	PRIMARY KEY(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
