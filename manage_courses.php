@@ -1,4 +1,7 @@
 <?php
+// TODO: crea teachers
+// TODO: crea corsi
+
 // admin-manage-courses.php
 require_once("bootstrap.php");
 
