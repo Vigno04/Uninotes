@@ -25,7 +25,9 @@ $sql = "
         p.surname,
         p.email,
         p.profile_picture,
-        p.created_at,
+        u.created_at,
+        u.programme,
+        u.bio,
         u.role,
         u.last_login
     FROM person p
@@ -47,8 +49,12 @@ if (!$userData) {
 }
 
 $fullName  = $userData['name'] . ' ' . $userData['surname'];
+$name = $userData['name'];
+$surname = $userData['surname'];
 $email     = $userData['email'];
 $role      = $userData['role'];     // dovrebbe coincidere con $_SESSION['role']
+$programme  = $userData['programme'] ?? '';
+$bio        = $userData['bio'] ?? '';
 $created   = $userData['created_at'];
 $lastLogin = $userData['last_login'];
 
@@ -135,15 +141,32 @@ if ($mode === 'admin') {
                 <!-- PROFILO UTENTE (stile mockup) -->
                 <div class="card border-0 shadow-sm rounded-4 mb-4">
                     <div class="card-body p-4 p-lg-5">
-                        <h2 class="h5 mb-1">Personal Information</h2>
-                        <p class="text-muted small mb-4">Update your account details</p>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h2 class="h5 mb-1">Personal Information</h2>
+                            <p class="text-muted small mb-0">Update your account details</p>
+                        </div>
 
-                        <form>
+                        <button type="button"
+                                id="editProfileBtn"
+                                class="btn btn-outline-secondary btn-sm">
+                            Edit profile
+                        </button>
+                    </div>
+
+                        <form id="profileForm" method="POST">
                             <div class="mb-3">
-                                <label class="form-label small text-muted">Full Name</label>
+                                <label class="form-label small text-muted">First Name</label>
                                 <input type="text"
                                        class="form-control"
-                                       value="<?php echo htmlspecialchars($fullName); ?>"
+                                       value="<?php echo htmlspecialchars($name); ?>"
+                                       disabled>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small text-muted">Last Name</label>
+                                <input type="text"
+                                       class="form-control"
+                                       value="<?php echo htmlspecialchars($surname); ?>"
                                        disabled>
                             </div>
 
@@ -154,27 +177,26 @@ if ($mode === 'admin') {
                                     <input type="email"
                                            class="form-control"
                                            value="<?php echo htmlspecialchars($email); ?>"
-                                           disabled>
+                                           disabled
+                                           data-lock="true">
                                 </div>
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label small text-muted">University</label>
+                                <label class="form-label small text-muted">Study Programme</label>
                                 <input type="text"
                                        class="form-control"
-                                       placeholder="Enter your university"
+                                       value="<?php echo htmlspecialchars($programme); ?>"
                                        disabled>
                             </div>
 
                             <div class="mb-4">
                                 <label class="form-label small text-muted">Bio</label>
-                                <textarea class="form-control"
-                                          rows="3"
-                                          placeholder="Tell us about yourself"
-                                          disabled></textarea>
+                                <textarea class="form-control" rows="3" cols="1" disabled><?php echo htmlspecialchars($bio); ?></textarea>
                             </div>
 
-                            <button type="button"
+                            <button type="submit"
+                                    id="saveProfileBtn"
                                     class="btn btn-primary w-100"
                                     disabled>
                                 Save Changes
@@ -267,9 +289,42 @@ if ($mode === 'admin') {
                         </div>
                     </div>
                 </div>
-
             <?php endif; ?>
-
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const editBtn = document.getElementById('editProfileBtn');
+    const form    = document.getElementById('profileForm');
+    const saveBtn = document.getElementById('saveProfileBtn');
+
+    if (!editBtn || !form || !saveBtn) {
+        console.warn('Edit/profile elements not found');
+        return;
+    }
+
+    const fields = form.querySelectorAll('input, textarea');
+    let editing = false;
+
+    editBtn.addEventListener('click', function () {
+        editing = !editing;
+
+        fields.forEach(function (el) {
+            // quelli con data-lock="true" restano sempre disabilitati
+            if (el.dataset.lock === 'true') return;
+            el.disabled = !editing;
+        });
+
+        saveBtn.disabled = !editing;
+        editBtn.textContent = editing ? 'Cancel' : 'Edit profile';
+
+        // se premi "Cancel", ricarico i valori originali dal DB
+        if (!editing) {
+            window.location.reload();
+        }
+    });
+});
+</script>
+

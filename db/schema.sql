@@ -12,8 +12,6 @@ CREATE TABLE IF NOT EXISTS `person` (
 	`surname` VARCHAR(100) NOT NULL,
 	`email` VARCHAR(255) NOT NULL UNIQUE,
 	`profile_picture` VARCHAR(255),
-	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	`deleted_at` TIMESTAMP NULL DEFAULT NULL,
 	PRIMARY KEY(`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -21,6 +19,8 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`person_id` INT NOT NULL UNIQUE,
 	`password` VARCHAR(255) NOT NULL,
 	`role` ENUM('user', 'admin') DEFAULT 'user',
+	`programme` VARCHAR(255) NULL,
+	`bio` TEXT NULL,
 	`last_login` TIMESTAMP NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`deleted_at` TIMESTAMP NULL DEFAULT NULL,
