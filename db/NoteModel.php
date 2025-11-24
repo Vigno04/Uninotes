@@ -12,5 +12,11 @@ class NoteModel {
         $stmt->execute([$id]);
         return $stmt->fetch();
     }
+
+    public function getFilesByNoteId(int $noteId) {
+        $stmt = $this->pdo->prepare("SELECT id, filename, mime_type FROM file WHERE note_id = ?");
+        $stmt->execute([$noteId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

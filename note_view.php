@@ -1,7 +1,6 @@
 <?php
 require_once("bootstrap.php");
 require_once 'db/NoteModel.php';
-require_once 'db/db.php';
 require_once 'vendor/parsedown/Parsedown.php';
 
 $id = $_GET['id'] ?? null;
@@ -10,12 +9,7 @@ if ($id !== null && is_numeric($id)) {
     $model = new NoteModel();
     $note = $model->getById((int)$id);
     if ($note) {
-        $pdo = Database::getInstance();
-        
-        // Query files for this note
-        $stmt = $pdo->prepare("SELECT id, filename, mime_type FROM file WHERE note_id = ?");
-        $stmt->execute([$note['id']]);
-        $files = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $files = $model->getFilesByNoteId($note['id']);
         
         // Build filename => file details map
         $fileMap = [];
