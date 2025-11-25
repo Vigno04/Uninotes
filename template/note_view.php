@@ -1,6 +1,8 @@
+<link rel="stylesheet" href="vendor/github-markdown/github-markdown.css">
+
 <div class="container mt-5">
     <h1><?php echo htmlspecialchars($note['title'] ?? 'Nota'); ?></h1>
-    <div><?php echo $htmlContent; ?></div>
+    <div class="markdown-body"><?php echo $htmlContent; ?></div>
 </div>
 
 <script>
