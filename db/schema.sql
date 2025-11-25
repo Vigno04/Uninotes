@@ -21,11 +21,13 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`role` ENUM('user', 'admin') DEFAULT 'user',
 	`programme` VARCHAR(255) NULL,
 	`bio` TEXT NULL,
+	`programme_id` INT NULL,
 	`last_login` TIMESTAMP NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`deleted_at` TIMESTAMP NULL DEFAULT NULL,
 	PRIMARY KEY(`person_id`),
-	FOREIGN KEY(`person_id`) REFERENCES `person`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
+	FOREIGN KEY(`person_id`) REFERENCES `person`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT,
+	FOREIGN KEY(`programme_id`) REFERENCES `programme`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `teacher` (
@@ -38,6 +40,12 @@ CREATE TABLE IF NOT EXISTS `teacher` (
 	FOREIGN KEY(`person_id`) REFERENCES `person`(`id`) ON UPDATE NO ACTION ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS `programme` (
+	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
+	`name` VARCHAR(255) NOT NULL UNIQUE,
+	PRIMARY KEY(`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- ============================================
 -- COURSE MANAGEMENT
 -- ============================================
@@ -47,10 +55,12 @@ CREATE TABLE IF NOT EXISTS `course` (
 	`name` VARCHAR(255) NOT NULL,
 	`description` TEXT,
 	`created_by` INT,
+	`programme_id` INT NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	PRIMARY KEY(`id`),
 	UNIQUE KEY `unique_course_name` (`name`),
-	FOREIGN KEY(`created_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL
+	FOREIGN KEY(`created_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
+	FOREIGN KEY(`programme_id`) REFERENCES `programme`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `course_offering` (
@@ -191,3 +201,5 @@ CREATE INDEX `idx_offering_follow_user` ON `course_offering_follow`(`user_id`);
 CREATE FULLTEXT INDEX `idx_note_fulltext` ON `note`(`title`, `content`);
 CREATE INDEX `idx_note_vote_count` ON `note`(`vote_count`);
 CREATE INDEX `idx_file_uploaded_by` ON `file`(`uploaded_by`);
+CREATE INDEX `idx_user_programme` ON `user`(`programme_id`);
+CREATE INDEX `idx_course_programme` ON `course`(`programme_id`);

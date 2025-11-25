@@ -243,7 +243,7 @@ if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
                     </div>
 
                     <!-- Grafico: note per corso -->
-                    <h2 class="h6 mb-2">Note per corso</h2>
+                    <h2 class="h6 mb-2">Notes by course</h2>
 
                     <?php if (empty($notesByCourse)): ?>
                         <p class="text-muted small mb-4">No data available for chart.</p>
@@ -360,7 +360,7 @@ if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
             data: {
                 labels: labels,
                 datasets: [{
-                    label: 'Note per corso',
+                    label: 'Notes by course',
                     data: data,
                     borderWidth: 1
                 }]
