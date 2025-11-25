@@ -41,13 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
             $maxSize = 2 * 1024 * 1024; // 2 MB
             $finfo = finfo_open(FILEINFO_MIME_TYPE);
             $mime = finfo_file($finfo, $file['tmp_name']);
-            finfo_close($finfo);
 
             $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
             if (!isset($allowed[$mime])) {
-                $updateMessage = '<div class="alert alert-danger mb-3">Tipo file non consentito. Usa JPG/PNG/WEBP.</div>';
+                $updateMessage = '<div class="alert alert-danger mb-3">File type not allowed. Use JPG/PNG/WEBP.</div>';
             } elseif ($file['size'] > $maxSize) {
-                $updateMessage = '<div class="alert alert-danger mb-3">File troppo grande. Max 2MB.</div>';
+                $updateMessage = '<div class="alert alert-danger mb-3">File too large. Max 2MB.</div>';
             } else {
                 $ext = $allowed[$mime];
                 $newName = 'profile_' . $personId . '_' . time() . '.' . $ext;
@@ -177,20 +176,6 @@ if ($uploadRow = mysqli_fetch_assoc($uploadRes)) {
 }
 mysqli_stmt_close($uploadStmt);
 
-/*
-// NOTE SCARICATE (download) – qui assumo tabella note_downloads
-// TODO: TUTTO DA RIFATE
-// TODO: FARE PURE LA TABELLA!
-$downloadSql = "SELECT COUNT(*) AS c FROM note_downloads WHERE person_id = ?";
-$downloadStmt = mysqli_prepare($conn, $downloadSql);
-mysqli_stmt_bind_param($downloadStmt, "i", $personId);
-mysqli_stmt_execute($downloadStmt);
-$downloadRes = mysqli_stmt_get_result($downloadStmt);
-if ($downloadRow = mysqli_fetch_assoc($downloadRes)) {
-    $activity['downloaded'] = (int)$downloadRow['c'];
-}
-mysqli_stmt_close($downloadStmt);
-*/
 
 if ($mode === 'admin') {
     $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM user");
@@ -277,8 +262,8 @@ if ($mode === 'admin') {
                                 <img id="profilePreview" src="<?php echo htmlspecialchars($previewSrc); ?>"
                                      alt="profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
                                 <div>
-                                    <input type="file" name="profile_picture" id="profilePictureInput" accept="image/*" disabled>
-                                    <div class="small text-muted">JPG, PNG, WEBP — max 2MB</div>
+                                    <input type="file" class="form-control" name="profile_picture" id="profilePictureInput" accept="image/*" disabled>
+                                    <div class="small text-muted">JPG, PNG, WEBP - max 2MB</div>
                                 </div>
                             </div>
                         </div>
