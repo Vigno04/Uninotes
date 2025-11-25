@@ -22,7 +22,6 @@ CREATE TABLE IF NOT EXISTS `user` (
 	`programme` VARCHAR(255) NULL,
 	`bio` TEXT NULL,
 	`programme_id` INT NULL,
-	`bio` TEXT NULL,
 	`last_login` TIMESTAMP NULL,
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`deleted_at` TIMESTAMP NULL DEFAULT NULL,

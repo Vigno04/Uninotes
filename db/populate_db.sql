@@ -39,6 +39,18 @@ VALUES
    'https://www.unibo.it/docenti/paolo.bianchi', NULL, NULL);
 
 -- -------------------------
+-- PROGRAMME
+-- -------------------------
+
+INSERT INTO `programme` (`name`) VALUES
+  ('Ingegneria e Scienze Informatiche'),
+  ('Informatica'),
+  ('Ingegneria Informatica'),
+  ('Fisica'),
+  ('Giurisprudenza');
+
+
+-- -------------------------
 -- COURSE
 -- -------------------------
 INSERT INTO course (id, name, description, created_by)

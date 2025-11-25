@@ -1,12 +1,72 @@
+
+<?php
+
+// PRogramme
+$programmeFilter = isset($_GET['programme_id']) && $_GET['programme_id'] !== '' ? (int)$_GET['programme_id'] : null;
+$programmeOptions = [];
+$sqlProgrammeOptions = "
+  SELECT DISTINCT p.id, p.name
+    FROM programme p
+    ORDER BY p.name
+";
+
+$resultProgrammeOptions = mysqli_query($conn, $sqlProgrammeOptions);
+if ($resultProgrammeOptions) {
+  while ($row = mysqli_fetch_assoc($resultProgrammeOptions)) {
+    $programmeOptions[] = $row;
+  }
+}
+
+// COurse
+$courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
+
+$courseOptions = [];
+$sqlCourseOptions = "
+    SELECT DISTINCT c.id, c.name
+    FROM course c
+    JOIN course_offering co ON co.course_id = c.id
+    JOIN topic t ON t.offering_id = co.id
+    JOIN note n ON n.topic_id = t.id AND n.status = 'published'
+    ORDER BY c.name
+";
+$resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
+if ($resultCourseOptions) {
+    while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
+        $courseOptions[] = $row;
+    }
+}
+
+// Teacher
+$teacherFilter = isset($_GET['person_id']) && $_GET['person_id'] !== '' ? (int)$_GET['person_id'] : null;
+
+
+$teacherOptions = [];
+$sqlTeacherOptions = "
+    SELECT DISTINCT p.id,
+           CONCAT(p.name, ' ', p.surname) AS full_name
+    FROM person p
+    JOIN teacher t ON t.person_id = p.id
+    ORDER BY p.surname, p.name
+";
+
+$resultTeacherOptions = mysqli_query($conn, $sqlTeacherOptions);
+if ($resultTeacherOptions) {
+    while ($row = mysqli_fetch_assoc($resultTeacherOptions)) {
+        $teacherOptions[] = $row;
+    }
+}
+
+?>
+
 <!-- PAGINA CARICA APPUNTI (CONTENUTO CENTRATO) -->
 <main class="upload-page py-4 py-md-5">
   <div class="container d-flex flex-column align-items-center">
 
     <!-- Titolo + sottotitolo, centrati -->
     <div class="upload-header text-center mb-4 mb-md-5">
-      <h1 class="h4 mb-1">Carica Appunti</h1>
+      <h1 class="h4 mb-1">Upload Notes</h1>
       <p class="text-muted small mb-0">
-        Condividi i tuoi appunti con altri studenti.
+        Share your notes with other students.
       </p>
     </div>
 
@@ -14,65 +74,70 @@
     <div class="upload-card p-4 p-lg-5">
       <!-- Quando avrai il backend, metti action="upload.php" -->
       <form
-        action="#"
+        id="noteForm"
+        action="upload.php"
         method="POST"
         enctype="multipart/form-data"
         class="row g-3"
       >
         <!-- Titolo -->
         <div class="col-12">
-          <label class="form-label">Titolo *</label>
+          <label class="form-label">Title *</label>
           <input
             type="text"
-            name="titolo"
+            name="title"
             class="form-control"
-            placeholder="Es. Appunti Lezione 3 - Algoritmi"
+            placeholder="Eg. Appunti Lezione 3 - Algoritmi"
             required
           />
         </div>
 
         <!-- Facoltà -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Facoltà *</label>
-          <select class="form-select" name="facolta" required>
-            <option value="" disabled selected>Seleziona facoltà</option>
-            <option>Ingegneria e Scienze Informatiche</option>
-            <option>Informatica</option>
-            <option>Ingegneria Informatica</option>
-            <option>Fisica</option>
-            <option>Giurisprudenza</option>
-            <option>Economia</option>
+          <label class="form-label">Programme *</label>
+          <select class="form-select" name="programme" required>
+            <option value="" disabled selected>Select programme</option>
+            <!-- TODO: prendili dal db -->
+             <?php foreach ($programmeOptions as $programme): ?>
+              <option value="<?php echo (int)$programme['id'] ?>">
+                <?php echo ($programmeFilter === (int)$programme['id']) ? 'selected' : ''; ?>
+                <?php echo htmlspecialchars($programme['name']) ?>
+              </option>
+              <?php endforeach; ?>
           </select>
         </div>
 
         <!-- Corso (Esame) -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Corso (Esame) *</label>
-          <select class="form-select" name="corso" required>
-            <option value="" disabled selected>Seleziona corso</option>
-            <option>Algoritmi e Strutture Dati</option>
-            <option>Analisi Matematica I</option>
-            <option>Basi di Dati</option>
-            <option>Programmazione Funzionale</option>
-            <option>Circuiti Digitali</option>
+          <label class="form-label">Course (Exam) *</label>
+          <select class="form-select" name="course" required>
+            <option value="" disabled selected>Select course</option>
+            <?php foreach ($courseOptions as $course): ?>
+                <option value="<?php echo (int)$course['id']; ?>"
+                    <?php echo ($courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($course['name']); ?>
+                </option>
+            <?php endforeach; ?>
           </select>
         </div>
 
         <!-- Docente -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Docente *</label>
-          <select class="form-select" name="docente" required>
-            <option value="" disabled selected>Seleziona docente</option>
-            <option>Prof. Rossi</option>
-            <option>Prof. Bianchi</option>
-            <option>Prof. Verdi</option>
-            <option>Prof.ssa Neri</option>
+          <label class="form-label">Teacher *</label>
+          <select class="form-select" name="teacher" required>
+            <option value="" disabled selected>Select teacher</option>
+            <?php foreach ($teacherOptions as $teacher): ?>
+                <option value="<?php echo (int)$teacher['id']; ?>"
+                    <?php echo ($teacherFilter === (int)$teacher['id']) ? 'selected' : ''; ?>>
+                    <?php echo htmlspecialchars($teacher['full_name']); ?>
+                </option>
+            <?php endforeach; ?>
           </select>
         </div>
 
         <!-- Tipo di File (3 bottoni) -->
         <div class="col-12 col-md-6">
-          <label class="form-label d-block">Tipo di File *</label>
+          <label class="form-label d-block">File type *</label>
           <div class="btn-group w-100 filetype-toggle" role="group">
             <input
               type="radio"
@@ -102,7 +167,7 @@
               for="fileImg"
             >
               <i class="bi bi-image mb-1"></i>
-              <span class="small">Immagine</span>
+              <span class="small">Photo</span>
             </label>
 
             <input
@@ -117,7 +182,7 @@
               for="fileTxt"
             >
               <i class="bi bi-file-earmark-text mb-1"></i>
-              <span class="small">Testo</span>
+              <span class="small">Text</span>
             </label>
           </div>
         </div>
@@ -129,8 +194,8 @@
             <div class="dropzone-icon mb-2">
               <i class="bi bi-cloud-arrow-up"></i>
             </div>
-            <p class="mb-1">Clicca per caricare o trascina il file qui</p>
-            <p class="text-muted small mb-0">PDF fino a 10MB</p>
+            <p class="mb-1">Click or drag file here to upload it.</p>
+            <p class="text-muted small mb-0">PDF up to 10MB</p>
           </div>
           <!-- input reale -->
           <input
@@ -143,12 +208,12 @@
 
         <!-- Descrizione -->
         <div class="col-12">
-          <label class="form-label">Descrizione (Opzionale)</label>
+          <label class="form-label">Description (Optional)</label>
           <textarea
             class="form-control"
             name="descrizione"
             rows="4"
-            placeholder="Aggiungi una breve descrizione degli appunti..."
+            placeholder="Add a short description of your note..."
           ></textarea>
         </div>
 
@@ -156,10 +221,10 @@
         <div class="col-12 mt-2">
           <button
             type="submit"
-            class="btn btn-upload text-white w-100 py-2 d-flex justify-content-center align-items-center gap-2"
-          >
+            id="uploadBtn"
+            class="btn btn-primary text-white w-100 py-2 d-flex justify-content-center align-items-center gap-2">
             <i class="bi bi-upload"></i>
-            Carica Appunti
+            Upload notes
           </button>
         </div>
       </form>
