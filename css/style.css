@@ -112,6 +112,25 @@ body.auth-page {
     font-size: 0.85rem;
 }
 
+.btn-upload {
+    background: linear-gradient(135deg, #4e54c8, #8f94fb) !important;
+    border: none !important;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    color: white !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.btn-upload:hover {
+    background: linear-gradient(135deg, #3a3fa8, #7a7edb) !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(78, 84, 200, 0.3);
+}
+
 @media (max-width: 576px) {
     .auth-card-wrapper {
         max-width: 360px;
