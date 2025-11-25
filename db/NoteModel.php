@@ -18,5 +18,15 @@ class NoteModel {
         $stmt->execute([$noteId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getUserCoursesList(int $userId) {
+        $stmt = $this->pdo->prepare("SELECT c.name, co.year 
+                                    FROM course_offering_follow cof
+                                    INNER JOIN course_offering co ON cof.offering_id = co.id
+                                    INNER JOIN course c ON co.course_id = c.id
+                                    WHERE cof.user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }
 ?>

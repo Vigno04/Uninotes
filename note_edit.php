@@ -14,12 +14,6 @@ $selectedTopic         = '';
 $titleValue            = '';
 $contentValue          = '';
 
-// Later these lists can come from DB
-$courses = [
-    '1' => 'Informatica',
-    '2' => 'Ingegneria e Scienze Informatiche',
-];
-
 $courseOfferings = [
     '1' => 'A.A. 2024/2025 - Primo semestre',
     '2' => 'A.A. 2024/2025 - Secondo semestre',
@@ -50,22 +44,9 @@ $topics = [
                         <input type="hidden" name="note_id" value="<?php echo htmlspecialchars((string)$noteId); ?>">
                     <?php endif; ?>
 
-                    <!-- 1. Selezione corso -->
-                    <div class="mb-3">
-                        <label for="course" class="form-label">Corso *</label>
-                        <select class="form-select" id="course" name="course" required>
-                            <option value="" disabled <?php echo $selectedCourse === '' ? 'selected' : ''; ?>>Seleziona corso</option>
-                            <?php foreach ($courses as $id => $label): ?>
-                                <option value="<?php echo htmlspecialchars($id); ?>" <?php echo ($selectedCourse === $id) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($label); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-
                     <!-- 2. Selezione erogazione del corso -->
                     <div class="mb-3">
-                        <label for="course_offering" class="form-label">Erogazione corso *</label>
+                        <label for="course_offering" class="form-label">Corso *</label>
                         <select class="form-select" id="course_offering" name="course_offering" required>
                             <option value="" disabled <?php echo $selectedCourseOffering === '' ? 'selected' : ''; ?>>Seleziona erogazione</option>
                             <?php foreach ($courseOfferings as $id => $label): ?>

@@ -35,9 +35,9 @@ $profilePage = 'account';
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'upload' ? 'active' : ''; ?>"
-                       href="index.php?page=upload">
-                        Carica
+                    <a class="nav-link <?php echo $currentPage === 'note_edit' ? 'active' : ''; ?>"
+                       href="index.php?page=note_edit">
+                        Crea Nota
                     </a>
                 </li>
                 <li class="nav-item">

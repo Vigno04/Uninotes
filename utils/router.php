@@ -30,10 +30,6 @@ class Router
             'file'  => 'login.php',
             'title' => 'Uninotes - Login',
         ],
-        'upload'=> [
-            'file'=> 'upload.php',
-            'title'=> 'Uninotes - Carica Appunti',
-            ],
         'note_view' => [
             'file'  => 'note_view.php',
             'title' => 'Uninotes - Nota',

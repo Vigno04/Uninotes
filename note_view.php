@@ -68,7 +68,7 @@ if ($id !== null && is_numeric($id)) {
         }
         
         ob_start();
-        include("template/note.php");
+        include("template/note_view.php");
         $content = ob_get_clean();
         
         $templateParams = ["title" => "Nota", "main-content" => $content];
