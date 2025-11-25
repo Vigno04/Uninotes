@@ -71,7 +71,7 @@ if ($resultTeacherOptions) {
     </div>
 
     <!-- Card centrale con il form -->
-    <div class="upload-card p-4 p-lg-5">
+    <div class="upload-card p-4 p-lg-4">
       <!-- Quando avrai il backend, metti action="upload.php" -->
       <form
         id="noteForm"
