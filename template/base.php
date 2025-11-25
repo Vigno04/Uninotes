@@ -10,6 +10,7 @@ $profilePage = 'account';
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($templateParams["title"] ?? "UniNotes"); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -18,7 +19,7 @@ $profilePage = 'account';
 <body class="bg-light">
 
 <nav class="navbar navbar-expand-lg navbar-dark" style="background:#004a6f;">
-    <div class="container">
+    <div class="container-fluid px-3 px-lg-5">
         <a class="navbar-brand fw-semibold" href="index.php?page=home">UniNotes</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
