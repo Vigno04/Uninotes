@@ -37,13 +37,13 @@ $profilePage = 'account';
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'note_edit' ? 'active' : ''; ?>"
                        href="index.php?page=note_edit">
-                        Crea Nota
+                        Create Note
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'account' ? 'active' : ''; ?>"
                        href="index.php?page=<?php echo $profilePage; ?>">
-                        Profilo
+                        Profile
                     </a>
                 </li>
 
