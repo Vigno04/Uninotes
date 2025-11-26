@@ -157,43 +157,6 @@
                         </div>
                     </div>
                     <?php endif; ?>
-
-                    <hr class="my-4">
-
-                    <!-- Quick Markdown guide -->
-                    <div class="mb-3">
-                        <h2 class="h6 mb-2">Quick Markdown Guide</h2>
-                        <div class="row small">
-                            <div class="col-12 col-md-6 mb-2">
-                                <strong>Headings</strong><br>
-                                <code># Heading 1</code><br>
-                                <code>## Heading 2</code><br>
-                                <code>### Heading 3</code>
-                            </div>
-                            <div class="col-12 col-md-6 mb-2">
-                                <strong>Text</strong><br>
-                                <code>**bold**</code><br>
-                                <code>*italic*</code><br>
-                                <code>~~strikethrough~~</code>
-                            </div>
-                            <div class="col-12 col-md-6 mb-2">
-                                <strong>Lists</strong><br>
-                                <code>- item</code><br>
-                                <code>1. numbered item</code>
-                            </div>
-                            <div class="col-12 col-md-6 mb-2">
-                                <strong>Links and Images</strong><br>
-                                <code>[link text](https://example.com)</code><br>
-                                <code>![alt image](image.png)</code>
-                            </div>
-                            <div class="col-12 col-md-6 mb-2">
-                                <strong>Code</strong><br>
-                                <code>`inline`</code><br>
-                                <code>```<br>code block<br>```</code>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- Buttons -->
                     <div class="d-flex justify-content-between align-items-center mt-3">
                         <div>
