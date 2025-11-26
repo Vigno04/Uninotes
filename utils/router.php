@@ -36,6 +36,7 @@ class Router
         ],
         'note_edit' => [
             'file'  => 'note_edit.php',
+            'template' => 'template/note_edit.php',
             'title' => 'Uninotes - Nota',
         ],
     ];

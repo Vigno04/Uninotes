@@ -166,40 +166,6 @@ class MarkdownRenderer
     }
 
     /**
-     * Get the Table of Contents from the parsed content.
-     * 
-     * @return string The HTML Table of Contents
-     */
-    public function getTableOfContents(): string
-    {
-        return $this->parser->contentsList();
-    }
-
-    /**
-     * Enable or disable safe mode.
-     * 
-     * @param bool $safeMode Whether to enable safe mode
-     * @return self
-     */
-    public function setSafeMode(bool $safeMode): self
-    {
-        $this->parser->setSafeMode($safeMode);
-        return $this;
-    }
-
-    /**
-     * Enable or disable automatic line breaks.
-     * 
-     * @param bool $breaksEnabled Whether to enable automatic line breaks
-     * @return self
-     */
-    public function setBreaksEnabled(bool $breaksEnabled): self
-    {
-        $this->parser->setBreaksEnabled($breaksEnabled);
-        return $this;
-    }
-
-    /**
      * Generate the file list HTML for attached files.
      * 
      * @param array $files Array of file records with 'id' and 'filename' keys

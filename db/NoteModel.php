@@ -45,5 +45,50 @@ class NoteModel {
         $stmt->execute([$offeringId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    /**
+     * Create a new note.
+     */
+    public function create(int $ownerId, int $topicId, string $title, string $content, string $status = 'draft'): int {
+        $stmt = $this->pdo->prepare("
+            INSERT INTO note (owner_id, topic_id, title, content, status)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->execute([$ownerId, $topicId, $title, $content, $status]);
+        return (int)$this->pdo->lastInsertId();
+    }
+
+    /**
+     * Update an existing note.
+     */
+    public function update(int $noteId, int $topicId, string $title, string $content): bool {
+        $stmt = $this->pdo->prepare("
+            UPDATE note SET topic_id = ?, title = ?, content = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND deleted_at IS NULL
+        ");
+        return $stmt->execute([$topicId, $title, $content, $noteId]);
+    }
+ 
+    /**
+     * Publish a note (change status from draft to published).
+     */
+    public function publish(int $noteId): bool {
+        $stmt = $this->pdo->prepare("
+            UPDATE note SET status = 'published', published_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND deleted_at IS NULL
+        ");
+        return $stmt->execute([$noteId]);
+    }
+
+    /**
+     * Unpublish a note (change status back to draft).
+     */
+    public function unpublish(int $noteId): bool {
+        $stmt = $this->pdo->prepare("
+            UPDATE note SET status = 'draft', updated_at = CURRENT_TIMESTAMP
+            WHERE id = ? AND deleted_at IS NULL
+        ");
+        return $stmt->execute([$noteId]);
+    }
 }
 ?>
