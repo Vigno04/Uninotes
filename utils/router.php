@@ -32,6 +32,7 @@ class Router
         ],
         'note_view' => [
             'file'  => 'note_view.php',
+            'template' => 'template/note_view.php',
             'title' => 'Uninotes - Nota',
         ],
         'note_edit' => [

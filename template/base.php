@@ -16,6 +16,7 @@ $profilePage = 'account';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="vendor/github-markdown/github-markdown.css">
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="bg-light">

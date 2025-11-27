@@ -1,4 +1,12 @@
 <?php
+// note_view.php - Controller for note viewing
+
+// If someone opens note_view.php directly, redirect to router
+if (basename($_SERVER['SCRIPT_NAME']) === 'note_view.php') {
+    header('Location: index.php?page=note_view');
+    exit;
+}
+
 require_once("bootstrap.php");
 require_once 'db/NoteModel.php';
 require_once 'utils/MarkdownRenderer.php';
@@ -69,11 +77,7 @@ if ($id !== null && is_numeric($id)) {
             }
         }
         
-        ob_start();
-        include("template/note_view.php");
-        $content = ob_get_clean();
-        
-        $templateParams = ["title" => "Nota", "main-content" => $content];
+        $templateParams = ["title" => "Nota"];
     } else {
         $content = "<div class='container mt-5'><h1>Nota non trovata</h1></div>";
         $templateParams = ["title" => "Nota non trovata", "main-content" => $content];
@@ -82,6 +86,4 @@ if ($id !== null && is_numeric($id)) {
     $content = "<div class='container mt-5'><h1>ID non valido</h1></div>";
     $templateParams = ["title" => "ID non valido", "main-content" => $content];
 }
-
-require("template/base.php");
 ?>

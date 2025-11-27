@@ -1,5 +1,3 @@
-<link rel="stylesheet" href="vendor/github-markdown/github-markdown.css">
-
 <div class="container mt-5">
     <h1 class="mb-4"><?php echo htmlspecialchars($note['title'] ?? 'Nota'); ?></h1>
     <div class="row">
@@ -15,13 +13,13 @@
         <!-- Corrections Column -->
         <div class="col-12 col-lg-4">
             <div class="corrections-sticky-wrapper">
-                <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card shadow-sm rounded-4 mb-4">
                     <div class="card-body p-4">
                         <h3 class="mb-3">Corrections</h3>
                         <?php if (!empty($corrections)): ?>
                             <div class="corrections-scrollable">
                                 <?php foreach ($corrections as $corr): ?>
-                                    <div class="card mb-3 border">
+                                    <div class="card mb-3 border-0">
                                         <div class="card-body p-3">
                                             <p class="mb-1"><?php echo nl2br(htmlspecialchars($corr['message'])); ?></p>
                                             <?php if ($corr['file_id']): ?>
@@ -50,7 +48,7 @@
                 </div>
 
                 <?php if (isset($_SESSION['person_id'])): ?>
-                    <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card shadow-sm rounded-4">
                         <div class="card-body p-4">
                             <h3 class="mb-3">Report a correction</h3>
                             <form method="post">
