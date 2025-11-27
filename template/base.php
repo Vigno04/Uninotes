@@ -16,12 +16,16 @@ $profilePage = 'account';
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="bg-light">
 
 <nav class="navbar navbar-expand-lg navbar-dark" style="background:#004a6f;">
     <div class="container-fluid px-3 px-lg-5">
-        <a class="navbar-brand fw-semibold" href="index.php?page=home">UniNotes</a>
+        <a class="navbar-brand fw-semibold" href="index.php?page=home" style="display: flex; align-items: center;">
+            <img src="assets/favicon.ico" alt="UniNotes Icon" style="height: 3.15rem; margin-right: 8px;">
+            UniNotes
+        </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainNavbar">

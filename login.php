@@ -72,13 +72,14 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <title>Login - UniNotes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="auth-page">
     <div class="auth-card-wrapper px-3 px-sm-0">
         <div class="auth-card mx-auto">
             <div class="text-center mb-4">
                 <div class="brand-icon mb-2">
-                    <img src="assets/book-open.svg" alt="UniNotes" class="img-fluid" style="max-width: 36px;">
+                    <img src="assets/favicon-blueBG.ico" alt="UniNotes" class="img-fluid">
                 </div>
                 <div class="brand-title">UniNotes</div>
                 <div class="brand-subtitle">Share knowledge, ace together</div>

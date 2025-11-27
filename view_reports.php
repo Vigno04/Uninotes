@@ -33,18 +33,18 @@ $sql = "
     SELECT 
         c.id,
         c.message,
-        c.snippet,
-        c.file_index,
-        c.line_number,
+        c.file_id,
         c.created_at,
         c.resolved,
         c.resolved_at,
         n.id    AS note_id,
         n.title AS note_title,
+        f.filename,
         p.name,
         p.surname
     FROM correction c
     JOIN note n      ON c.note_id = n.id
+    LEFT JOIN file f ON c.file_id = f.id
     LEFT JOIN user u ON c.reported_by = u.person_id
     LEFT JOIN person p ON p.id = u.person_id
     ORDER BY c.resolved ASC, c.created_at DESC
@@ -96,17 +96,9 @@ if ($result) {
                                                 <div class="small">
                                                     <?php echo nl2br(htmlspecialchars($r['message'])); ?>
                                                 </div>
-                                                <?php if (!empty($r['snippet'])): ?>
+                                                <?php if (!is_null($r['file_id'])): ?>
                                                     <div class="text-muted small mt-1">
-                                                        <strong>Snippet:</strong>
-                                                        <?php echo htmlspecialchars($r['snippet']); ?>
-                                                    </div>
-                                                <?php endif; ?>
-                                                <?php if (!is_null($r['file_index']) || !is_null($r['line_number'])): ?>
-                                                    <div class="text-muted small">
-                                                        <strong>Location:</strong>
-                                                        file <?php echo (int)$r['file_index']; ?>,
-                                                        line <?php echo (int)$r['line_number']; ?>
+                                                        <strong>File:</strong> <?php echo htmlspecialchars($r['filename']); ?>
                                                     </div>
                                                 <?php endif; ?>
                                             </td>

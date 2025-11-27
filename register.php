@@ -72,10 +72,19 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Register - UniNotes</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
-<body class="d-flex align-items-center justify-content-center">
-    <div class="login-card col-11 col-md-6 col-lg-4">
+<body class="auth-page">
+    <div class="auth-card-wrapper px-3 px-sm-0">
+        <div class="auth-card mx-auto">
+        <div class="text-center mb-4">
+            <div class="brand-icon mb-2">
+                <img src="assets/favicon-blueBG.ico" alt="UniNotes" class="img-fluid">
+            </div>
+            <div class="brand-title">UniNotes</div>
+            <div class="brand-subtitle">Create your account</div>
+        </div>
         <h2 class="text-center mb-4 fw-light">Create your account</h2>
         <?= $message ?>
         <form action="" method="POST">
@@ -108,6 +117,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </form>
         <p class="text-center text-muted mt-4 mb-0">© 2025 UniNotes - All Rights Reserved</p>
     </div>
+</div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>
