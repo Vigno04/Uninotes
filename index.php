@@ -11,9 +11,15 @@ if ($route["file"] === "login.php") {
     exit;
 }
 
+// If there's a separate template, load the controller first (contains PHP logic)
+if (isset($route["template"])) {
+    require $route["file"];
+}
+
 // Per tutte le altre pagine: preparo i parametri per il template
 $templateParams = [];
-$templateParams["main-content"] = $route["file"];   // es: "home.php", "userhome.php", ...
+// Use template file if specified, otherwise use the file itself as template
+$templateParams["main-content"] = $route["template"] ?? $route["file"];
 $templateParams["title"]        = $route["title"];
 
 // Ora carico il layout comune (navbar + <main> con dentro il contenuto scelto sopra)

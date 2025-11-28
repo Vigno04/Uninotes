@@ -10,16 +10,23 @@ $profilePage = 'account';
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($templateParams["title"] ?? "UniNotes"); ?></title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="vendor/github-markdown/github-markdown.css">
+    <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="bg-light">
 
 <nav class="navbar navbar-expand-lg navbar-dark" style="background:#004a6f;">
-    <div class="container">
-        <a class="navbar-brand fw-semibold" href="index.php?page=home">UniNotes</a>
+    <div class="container-fluid px-3 px-lg-5">
+        <a class="navbar-brand fw-semibold" href="index.php?page=home" style="display: flex; align-items: center;">
+            <img src="assets/favicon.ico" alt="UniNotes Icon" style="height: 3.15rem; margin-right: 8px;">
+            UniNotes
+        </a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
                 data-bs-target="#mainNavbar">
@@ -35,15 +42,15 @@ $profilePage = 'account';
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link <?php echo $currentPage === 'upload' ? 'active' : ''; ?>"
-                       href="index.php?page=upload">
-                        Upload
+                    <a class="nav-link <?php echo $currentPage === 'note_edit' ? 'active' : ''; ?>"
+                       href="index.php?page=note_edit">
+                        Create Note
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'account' ? 'active' : ''; ?>"
                        href="index.php?page=<?php echo $profilePage; ?>">
-                        Account
+                        Profile
                     </a>
                 </li>
 

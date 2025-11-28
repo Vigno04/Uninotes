@@ -34,6 +34,16 @@ class Router
             'file'=> 'upload.php',
             'title'=> 'Upload Notes - Uninotes',
             ],
+        'note_view' => [
+            'file'  => 'note_view.php',
+            'template' => 'template/note_view.php',
+            'title' => 'Uninotes - Nota',
+        ],
+        'note_edit' => [
+            'file'  => 'note_edit.php',
+            'template' => 'template/note_edit.php',
+            'title' => 'Uninotes - Nota',
+        ],
     ];
 
     public function getRoute()
