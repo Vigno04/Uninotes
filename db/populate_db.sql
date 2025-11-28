@@ -13,9 +13,12 @@ VALUES
   (1, 'Mario',    'Rossi',   'mario.rossi@studenti.unibo.it',   NULL),
   (2, 'Laura',    'Bianchi', 'laura.bianchi@studenti.unibo.it', NULL),
   (3, 'Giuseppe', 'Verdi',   'giuseppe.verdi@studenti.unibo.it',NULL),
-  (4, 'Admin',    'User',    'admin@uninotes.it',               NULL),
+  (4, 'Admin',    'User',    'admin@uninotes.it',               NULL), -- admin
   (5, 'Maria',    'Rossi',   'maria.rossi@unibo.it',            NULL), -- docente
-  (6, 'Paolo',    'Bianchi', 'paolo.bianchi@unibo.it',          NULL); -- docente
+  (6, 'Paolo',    'Bianchi', 'paolo.bianchi@unibo.it',          NULL), -- docente
+  (7, 'Pinco',    'Pallino', 'pp@unibo.it',                     NULL),
+  (8, 'AdminN',    'AdminC',  'a@unibo.it',                     NULL); -- admin
+
 
 -- -------------------------
 -- USER (utenti applicazione)
@@ -26,7 +29,10 @@ VALUES
   (1, 'password', 'user',  NULL),
   (2, 'password', 'user',  NULL),
   (3, 'password', 'user',  NULL),
-  (4, 'admin123', 'admin', NULL);
+  (4, 'admin123', 'admin', NULL),
+  (5, 'password', 'user',  NULL),
+  (7, '123',      'user',  NULL),
+  (8, '123',      'admin', NULL);
 
 -- -------------------------
 -- TEACHER (docenti)
@@ -42,12 +48,13 @@ VALUES
 -- PROGRAMME
 -- -------------------------
 
-INSERT INTO `programme` (`name`) VALUES
-  ('Ingegneria e Scienze Informatiche'),
-  ('Informatica'),
-  ('Ingegneria Informatica'),
-  ('Fisica'),
-  ('Giurisprudenza');
+INSERT INTO programme (id, name) 
+VALUES
+  (1, 'Ingegneria e Scienze Informatiche'),
+  (2, 'Informatica'),
+  (3, 'Ingegneria Informatica'),
+  (4, 'Fisica'),
+  (5, 'Giurisprudenza');
 
 
 -- -------------------------
