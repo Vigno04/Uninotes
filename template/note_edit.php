@@ -1,5 +1,50 @@
 <link rel="stylesheet" href="vendor/github-markdown/github-markdown.css">
 
+<?php
+
+
+
+// COurse
+$courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
+
+$courseOptions = [];
+$sqlCourseOptions = "
+    SELECT DISTINCT c.id, c.name
+    FROM course c
+    JOIN course_offering co ON co.course_id = c.id
+    JOIN topic t ON t.offering_id = co.id
+    JOIN note n ON n.topic_id = t.id AND n.status = 'published'
+    ORDER BY c.name
+";
+$resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
+if ($resultCourseOptions) {
+    while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
+        $courseOptions[] = $row;
+    }
+}
+
+// Topic
+$topicFilter = isset($_GET['topic_id']) && $_GET['topic_id'] !== '' ? (int)$_GET['topic_id'] : null;
+
+
+$topicOptions = [];
+$sqlTopicOptions = "
+    SELECT DISTINCT t.id, t.name
+    FROM topic t
+    ORDER BY t.name
+";
+
+$resultTopicOptions = mysqli_query($conn, $sqlTopicOptions);
+if ($resultTopicOptions) {
+    while ($row = mysqli_fetch_assoc($resultTopicOptions)) {
+        $topicOptions[] = $row;
+    }
+}
+
+?>
+
+
+
 <!-- Success/Error Messages -->
 <?php if ($successMessage): ?>
     <div class="alert alert-success alert-dismissible fade show mt-3" role="alert">
@@ -44,30 +89,33 @@
                         <input type="hidden" name="note_id" value="<?php echo htmlspecialchars((string)$noteId); ?>">
                     <?php endif; ?>
 
-                    <!-- Course offering selection -->
-                    <div class="mb-3">
-                        <label for="course_offering" class="form-label">Course *</label>
-                        <select class="form-select" id="course_offering" name="course_offering" required>
-                            <option value="" disabled <?php echo $selectedCourseOffering === '' ? 'selected' : ''; ?>>Select offering</option>
-                            <?php foreach ($courseOfferings as $id => $label): ?>
-                                <option value="<?php echo htmlspecialchars($id); ?>" <?php echo ($selectedCourseOffering === $id) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($label); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+
+                                <!-- Corso (Esame) -->
+                    <div class="col-12 col-md-6 mb-3">
+                    <label class="form-label">Course (Exam) *</label>
+                    <select class="form-select" name="course" required>
+                        <option value="" disabled selected>Select course</option>
+                        <?php foreach ($courseOptions as $course): ?>
+                            <option value="<?php echo (int)$course['id']; ?>"
+                                <?php echo ($courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($course['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     </div>
 
                     <!-- Topic selection -->
-                    <div class="mb-3">
-                        <label for="topic" class="form-label">Topic *</label>
-                        <select class="form-select" id="topic" name="topic" required <?php echo !$selectedCourseOffering ? 'disabled' : ''; ?>>
-                            <option value="" disabled <?php echo $selectedTopic === '' ? 'selected' : ''; ?>>Select topic</option>
-                            <?php foreach ($topics as $id => $label): ?>
-                                <option value="<?php echo htmlspecialchars($id); ?>" <?php echo ($selectedTopic === $id) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($label); ?>
-                                </option>
-                            <?php endforeach; ?>
-                        </select>
+                    <div class="col-12 col-md-6 mb-3">
+                        <label class="form-label">Topic *</label>
+                        <select class="form-select" name="topic" required>
+                        <option value="" disabled selected>Select topic</option>
+                        <?php foreach ($topicOptions as $topic): ?>
+                            <option value="<?php echo (int)$topic['id']; ?>"
+                                <?php echo ($topicFilter === (int)$topic['id']) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($topic['name']); ?>
+                            </option>
+                        <?php endforeach; ?>
+                    </select>
                     </div>
 
                     <hr class="my-4">
