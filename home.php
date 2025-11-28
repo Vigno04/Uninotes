@@ -164,6 +164,7 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
             $format = !empty($row['file_type']) ? strtoupper($row['file_type']) : 'TEXT';
 
             $recentNotes[] = [
+                'id'=> $row['id'],
                 "title"      => $row["title"],
                 "course"     => $row["course_name"],
                 "exam"       => $exam,
@@ -197,6 +198,7 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
             $format = !empty($row['file_type']) ? strtoupper($row['file_type']) : 'TEXT';
 
             $recentNotes[] = [
+                'id'=> $row['id'],
                 "title"      => $row["title"],
                 "course"     => $row["course_name"],
                 "exam"       => $exam,
@@ -344,9 +346,10 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <a href="#" class="small text-primary text-decoration-none">
+                                    <a href="index.php?page=note_view&id=<?php echo htmlspecialchars($note['id']); ?>" class="small text-primary text-decoration-none">
                                         <h2 class="h5 mb-1">
                                             <!--Note title -->
+                                            <!-- href="index.php?page=note_edit" -->
                                             <?php echo htmlspecialchars($note["title"]); ?>
                                         </h2>
                                     </a>
