@@ -24,12 +24,7 @@ $perPage = 5; // risultati per pagina quando si cerca
 // -------------------------
 $courseOptions = [];
 $sqlCourseOptions = "
-    SELECT DISTINCT c.id, c.name
-    FROM course c
-    JOIN course_offering co ON co.course_id = c.id
-    JOIN topic t ON t.offering_id = co.id
-    JOIN note n ON n.topic_id = t.id AND n.status = 'published'
-    ORDER BY c.name
+    SELECT id, name FROM course;
 ";
 $resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
 if ($resultCourseOptions) {

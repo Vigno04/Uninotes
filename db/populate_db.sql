@@ -13,15 +13,21 @@ VALUES
   (1, 'Mario',    'Rossi',   'mario.rossi@studenti.unibo.it',   NULL),
   (2, 'Laura',    'Bianchi', 'laura.bianchi@studenti.unibo.it', NULL),
   (3, 'Giuseppe', 'Verdi',   'giuseppe.verdi@studenti.unibo.it',NULL),
-  (4, 'Admin',    'User',    'admin@uninotes.it',               NULL),
+  (4, 'Admin',    'User',    'admin@uninotes.it',               NULL), -- admin
   (5, 'Maria',    'Rossi',   'maria.rossi@unibo.it',            NULL), -- docente
   (6, 'Paolo',    'Bianchi', 'paolo.bianchi@unibo.it',          NULL), -- docente
+<<<<<<< HEAD
 
   -- new students / teachers
   (7, 'Elena',    'Neri',    'elena.neri@studenti.unibo.it',    NULL),
   (8, 'Luca',     'Romano',  'luca.romano@studenti.unibo.it',   NULL),
   (9, 'Silvia',   'Conti',   'silvia.conti@unibo.it',           NULL), -- docente
   (10,'Andrea',   'De Angelis','andrea.deangelis@unibo.it',     NULL); -- docente
+=======
+  (7, 'Pinco',    'Pallino', 'pp@unibo.it',                     NULL),
+  (8, 'AdminN',    'AdminC',  'a@unibo.it',                     NULL); -- admin
+
+>>>>>>> feature/Task#6-profile-picture
 
 -- -------------------------
 -- USER (utenti applicazione)
@@ -33,10 +39,16 @@ VALUES
   (2, 'password', 'user',  NULL),
   (3, 'password', 'user',  NULL),
   (4, 'admin123', 'admin', NULL),
+<<<<<<< HEAD
 
   -- new student accounts
   (7, 'password', 'user',  NULL),
   (8, 'password', 'user',  NULL);
+=======
+  (5, 'password', 'user',  NULL),
+  (7, '123',      'user',  NULL),
+  (8, '123',      'admin', NULL);
+>>>>>>> feature/Task#6-profile-picture
 
 -- -------------------------
 -- TEACHER (docenti)
@@ -51,6 +63,19 @@ VALUES
    'https://www.unibo.it/docenti/silvia.conti', NULL, NULL),
   (10,'Economia',
    'https://www.unibo.it/docenti/andrea.deangelis', NULL, NULL);
+
+-- -------------------------
+-- PROGRAMME
+-- -------------------------
+
+INSERT INTO programme (id, name) 
+VALUES
+  (1, 'Ingegneria e Scienze Informatiche'),
+  (2, 'Informatica'),
+  (3, 'Ingegneria Informatica'),
+  (4, 'Fisica'),
+  (5, 'Giurisprudenza');
+
 
 -- -------------------------
 -- COURSE
