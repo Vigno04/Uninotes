@@ -344,15 +344,18 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <h2 class="h5 mb-1">
-                                        <?php echo htmlspecialchars($note["title"]); ?>
-                                    </h2>
+                                    <a href="#" class="small text-primary text-decoration-none">
+                                        <h2 class="h5 mb-1">
+                                            <!--Note title -->
+                                            <?php echo htmlspecialchars($note["title"]); ?>
+                                        </h2>
+                                    </a>
+
                                     <p class="mb-0 text-muted">
+                                        <!-- Course of the note -->
                                         <?php echo htmlspecialchars($note["course"]); ?>
                                     </p>
-                                    <p class="mb-2 text-primary small">
-                                        <?php echo htmlspecialchars($note["exam"]); ?>
-                                    </p>
+
                                 </div>
 
                                 <span class="badge rounded-pill bg-light text-primary fw-semibold">
@@ -463,31 +466,5 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                     </div>
                 <?php endif; ?>
             </div>
-
-
-        <!-- Colonna laterale (corsi popolari) 
-        <div class="col-lg-3 mt-4 mt-lg-0">
-            <div class="card border-0 shadow-sm rounded-4">
-                <div class="card-body">
-                    <h2 class="h6 mb-3">Popular courses</h2>
-                    <?php if (empty($popularCourses)): ?>
-                        <p class="text-muted small mb-0">There are no notes for this course.</p>
-                    <?php else: ?>
-                        <ul class="list-unstyled mb-0">
-
-                            <?php foreach ($popularCourses as $course): ?>
-                                <li class="mb-2">
-                                    <a href="#" class="text-decoration-none">
-                                        <?php echo htmlspecialchars($course); ?> 
-                                </li>
-                            <?php endforeach; ?>
-                            
-                        </ul>
-                    <?php endif; ?>
-                </div>
-            </div>
-            
-        </div> -->
-
     </div>
 </div>

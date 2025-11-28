@@ -140,26 +140,6 @@ CREATE TABLE IF NOT EXISTS `note` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
--- ============================================
--- CORREZIONI / SUGGERIMENTI (Error reports / corrections)
--- Permette agli utenti di segnalare un punto errato indicando file/linea/pezzo
--- ============================================
-
-CREATE TABLE IF NOT EXISTS `correction` (
-	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
-	`reported_by` INT NULL,
-	`note_id` INT NOT NULL COMMENT 'Nota a cui si riferisce la segnalazione',
-	`file_id` INT NULL COMMENT 'File specifico a cui si riferisce la segnalazione (NULL = contenuto della nota)',
-	`message` TEXT NOT NULL COMMENT 'Descrizione di cosa c\'e\' di sbagliato',
-	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	`resolved` BOOLEAN NOT NULL DEFAULT FALSE,
-	`resolved_at` TIMESTAMP NULL DEFAULT NULL,
-	PRIMARY KEY(`id`),
-	FOREIGN KEY(`reported_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
-	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
-	FOREIGN KEY(`file_id`) REFERENCES `file`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 
 -- ============================================
 -- FILE MANAGEMENT
@@ -178,6 +158,26 @@ CREATE TABLE IF NOT EXISTS `file` (
 	PRIMARY KEY(`id`),
 	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
 	FOREIGN KEY(`uploaded_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ============================================
+-- CORREZIONI / SUGGERIMENTI (Error reports / corrections)
+-- Permette agli utenti di segnalare un punto errato indicando file/linea/pezzo
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS `correction` (
+	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
+	`reported_by` INT NULL,
+	`note_id` INT NOT NULL COMMENT 'Nota a cui si riferisce la segnalazione',
+	`file_id` INT NULL COMMENT 'File specifico a cui si riferisce la segnalazione (NULL = contenuto della nota)',
+	`message` TEXT NOT NULL COMMENT 'Descrizione di cosa c\'e\' di sbagliato',
+	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	`resolved` BOOLEAN NOT NULL DEFAULT FALSE,
+	`resolved_at` TIMESTAMP NULL DEFAULT NULL,
+	PRIMARY KEY(`id`),
+	FOREIGN KEY(`reported_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
+	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+	FOREIGN KEY(`file_id`) REFERENCES `file`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ============================================
