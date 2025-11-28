@@ -141,16 +141,15 @@ CREATE TABLE IF NOT EXISTS `correction` (
 	`id` INT NOT NULL AUTO_INCREMENT UNIQUE,
 	`reported_by` INT NULL,
 	`note_id` INT NOT NULL COMMENT 'Nota a cui si riferisce la segnalazione',
-	`file_index` INT NOT NULL DEFAULT 0 COMMENT 'Indice 1-based del file nella nota (0 = nessun file specificato)',
-	`line_number` INT NULL COMMENT 'Numero di linea, se applicabile',
-	`snippet` TEXT NULL COMMENT 'Porzione di testo/pezzo incriminato (se utile)',
+	`file_id` INT NULL COMMENT 'File specifico a cui si riferisce la segnalazione (NULL = contenuto della nota)',
 	`message` TEXT NOT NULL COMMENT 'Descrizione di cosa c\'e\' di sbagliato',
 	`created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	`resolved` BOOLEAN NOT NULL DEFAULT FALSE,
 	`resolved_at` TIMESTAMP NULL DEFAULT NULL,
 	PRIMARY KEY(`id`),
 	FOREIGN KEY(`reported_by`) REFERENCES `user`(`person_id`) ON UPDATE NO ACTION ON DELETE SET NULL,
-	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
+	FOREIGN KEY(`note_id`) REFERENCES `note`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE,
+	FOREIGN KEY(`file_id`) REFERENCES `file`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
