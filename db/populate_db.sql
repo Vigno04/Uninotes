@@ -154,13 +154,13 @@ INSERT INTO file
   (id, note_id, filename, storage_path, file_type, file_size, mime_type, uploaded_by)
 VALUES
   (1, 1, 'algoritmi-introduzione.pdf',
-      'upload/algoritmi-introduzione.pdf', 'pdf', 524288,
+      'uploads/algoritmi-introduzione.pdf', 'pdf', 524288,
       'application/pdf', 1),
   (2, 2, 'liste-pile-code.pdf',
-      'upload/liste-pile-code.pdf', 'pdf', 734003,
+      'uploads/liste-pile-code.pdf', 'pdf', 734003,
       'application/pdf', 2),
   (3, 4, 'normalizzazione-riassunto.pdf',
-      'upload/normalizzazione-riassunto.pdf', 'pdf', 419430,
+      'uploads/normalizzazione-riassunto.pdf', 'pdf', 419430,
       'application/pdf', 1);
 
 -- -------------------------

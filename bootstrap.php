@@ -16,5 +16,5 @@ if ($conn === false) {
 mysqli_set_charset($conn, "utf8mb4");
 
 // opzionale: costante per la cartella upload
-define("UPLOAD_DIR", "./upload/");
+define("UPLOAD_DIR", "./uploads/");
 ?>

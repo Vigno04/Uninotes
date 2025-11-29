@@ -53,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
                 $dest = $profileDir . $newName;
                 if (move_uploaded_file($file['tmp_name'], $dest)) {
                     // salva solo il percorso (senza query) nel DB
-                    $dbPath = 'upload/profile/' . $newName;
+                    $dbPath = 'uploads/profile/' . $newName;
 
                     $uStmt = mysqli_prepare($conn, "UPDATE person SET profile_picture = ? WHERE id = ?");
                     mysqli_stmt_bind_param($uStmt, "si", $dbPath, $personId);

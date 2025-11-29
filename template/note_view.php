@@ -82,12 +82,12 @@ if ($id !== null && is_numeric($id)) {
         
         $templateParams = ["title" => "Nota"];
     } else {
-        $content = "<div class='container mt-5'><h1>Nota non trovata</h1></div>";
-        $templateParams = ["title" => "Nota non trovata", "main-content" => $content];
+        echo "<div class='container mt-5'><h1>Nota non trovata</h1></div>";
+        return;
     }
 } else {
-    $content = "<div class='container mt-5'><h1>ID non valido</h1></div>";
-    $templateParams = ["title" => "ID non valido", "main-content" => $content];
+    echo "<div class='container mt-5'><h1>No note selected</h1></div>";
+    return;
 }
 ?>
 
