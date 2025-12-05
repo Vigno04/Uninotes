@@ -118,8 +118,7 @@ $sqlBase = "
         c.name AS course_name,
         t.name AS topic_name,
         CONCAT(pt.name, ' ', pt.surname) AS teacher_name,
-        CONCAT(po.name, ' ', po.surname) AS author_name,
-        f.file_type
+        CONCAT(po.name, ' ', po.surname) AS author_name
     FROM note n
     JOIN topic t ON n.topic_id = t.id
     JOIN course_offering co ON t.offering_id = co.id
@@ -129,7 +128,6 @@ $sqlBase = "
     LEFT JOIN person pt ON th.person_id = pt.id              -- docente
     LEFT JOIN user uo ON n.owner_id = uo.person_id
     LEFT JOIN person po ON uo.person_id = po.id              -- autore
-    LEFT JOIN file f ON f.note_id = n.id
     $whereClause
     GROUP BY n.id
     ORDER BY $orderBy
@@ -161,8 +159,6 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
                 $exam .= ' - ' . $row['teacher_name'];
             }
 
-            $format = !empty($row['file_type']) ? strtoupper($row['file_type']) : 'TEXT';
-
             $recentNotes[] = [
                 'id'=> $row['id'],
                 "title"      => $row["title"],
@@ -170,9 +166,7 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
                 "exam"       => $exam,
                 "author"     => $row["author_name"] ?: "Anonimo",
                 "date"       => $row["note_date"],
-                "format"     => $format,
-                "views"      => (int)$row["vote_count"],
-                "downloads"  => 0,
+                "likes"      => (int)$row["vote_count"],
             ];
         }
         mysqli_stmt_close($stmt);
@@ -195,8 +189,6 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
                 $exam .= ' - ' . $row['teacher_name'];
             }
 
-            $format = !empty($row['file_type']) ? strtoupper($row['file_type']) : 'TEXT';
-
             $recentNotes[] = [
                 'id'=> $row['id'],
                 "title"      => $row["title"],
@@ -204,9 +196,7 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
                 "exam"       => $exam,
                 "author"     => $row["author_name"] ?: "Anonimo",
                 "date"       => $row["note_date"],
-                "format"     => $format,
-                "views"      => (int)$row["vote_count"],
-                "downloads"  => 0,
+                "likes"      => (int)$row["vote_count"],
             ];
         }
         mysqli_stmt_close($stmt);
@@ -360,10 +350,6 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                                     </p>
 
                                 </div>
-
-                                <span class="badge rounded-pill bg-light text-primary fw-semibold">
-                                    <?php echo htmlspecialchars($note["format"]); ?>
-                                </span>
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
@@ -382,10 +368,7 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
 
                                 <div class="d-flex align-items-center gap-3">
                                     <span class="small text-muted">
-                                        ⬇ <?php echo (int)$note["downloads"]; ?>
-                                    </span>
-                                    <span class="small text-muted">
-                                        👀 <?php echo (int)$note["views"]; ?>
+                                        ⬆ <?php echo (int)$note["likes"]; ?>
                                     </span>
                                 </div>
                             </div>
@@ -459,7 +442,7 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                                                 href="<?php echo buildPageUrl(1, $searchTerm, (int)$course['id'], $sort); ?>"
                                                 class="small text-primary text-decoration-none"
                                             >
-                                                View notes →
+                                                View notes → 
                                             </a>
                                         </div>
                                     </div>
