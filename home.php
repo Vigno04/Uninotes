@@ -8,7 +8,69 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'home.php') {
 }
 
 // Assumo che la sessione sia già partita in bootstrap.php
-$isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+$isAdmin      = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
+$currentUserId = $_SESSION['person_id'] ?? null;
+
+
+// 0) Gestione POST: aggiungi / rimuovi corso (follow / unfollow)
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $currentUserId !== null) {
+    $courseId = isset($_POST['course_id']) ? (int)$_POST['course_id'] : 0;
+
+    if ($courseId > 0) {
+        if (isset($_POST['follow_course'])) {
+            // FOLLOW → prendo l'offerta più recente (anno + semestre) per quel course_id
+            $sqlOffering = "
+                SELECT id
+                FROM course_offering
+                WHERE course_id = ?
+                ORDER BY year DESC, semester DESC
+                LIMIT 1
+            ";
+            $stmtOff = mysqli_prepare($conn, $sqlOffering);
+            if ($stmtOff) {
+                mysqli_stmt_bind_param($stmtOff, "i", $courseId);
+                mysqli_stmt_execute($stmtOff);
+                $resOff = mysqli_stmt_get_result($stmtOff);
+                if ($rowOff = mysqli_fetch_assoc($resOff)) {
+                    $offeringId = (int)$rowOff['id'];
+
+                    // inserisco nella tabella di follow (se non esiste già)
+                    $sqlFollow = "
+                        INSERT IGNORE INTO course_offering_follow (offering_id, user_id)
+                        VALUES (?, ?)
+                    ";
+                    $stmtFollow = mysqli_prepare($conn, $sqlFollow);
+                    if ($stmtFollow) {
+                        mysqli_stmt_bind_param($stmtFollow, "ii", $offeringId, $currentUserId);
+                        mysqli_stmt_execute($stmtFollow);
+                        mysqli_stmt_close($stmtFollow);
+                    }
+                }
+                mysqli_stmt_close($stmtOff);
+            }
+        } elseif (isset($_POST['unfollow_course'])) {
+            // UNFOLLOW → rimuovo tutti i follow per quel course_id (tutte le offering di quel corso)
+            $sqlUnfollow = "
+                DELETE cof
+                FROM course_offering_follow cof
+                JOIN course_offering co ON cof.offering_id = co.id
+                WHERE co.course_id = ? AND cof.user_id = ?
+            ";
+            $stmtUnf = mysqli_prepare($conn, $sqlUnfollow);
+            if ($stmtUnf) {
+                mysqli_stmt_bind_param($stmtUnf, "ii", $courseId, $currentUserId);
+                mysqli_stmt_execute($stmtUnf);
+                mysqli_stmt_close($stmtUnf);
+            }
+        }
+    }
+
+    // redirect per evitare il resubmit del form
+    header('Location: ' . strtok($_SERVER['REQUEST_URI'], '#'));
+    exit;
+}
+
+
 
 // -------------------------
 // 0) Parametri da $_GET
@@ -33,6 +95,31 @@ $resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
 if ($resultCourseOptions) {
     while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
         $courseOptions[] = $row;
+    }
+}
+
+// -------------------------
+// 1b) Corsi già seguiti dall'utente (per disabilitare il bottone)
+// -------------------------
+$followedCourseIds = [];
+
+if ($currentUserId !== null) {
+    $sqlFollowed = "
+        SELECT DISTINCT c.id AS course_id
+        FROM course_offering_follow cof
+        JOIN course_offering co ON cof.offering_id = co.id
+        JOIN course c ON co.course_id = c.id
+        WHERE cof.user_id = ?
+    ";
+    $stmtF = mysqli_prepare($conn, $sqlFollowed);
+    if ($stmtF) {
+        mysqli_stmt_bind_param($stmtF, "i", $currentUserId);
+        mysqli_stmt_execute($stmtF);
+        $resF = mysqli_stmt_get_result($stmtF);
+        while ($rowF = mysqli_fetch_assoc($resF)) {
+            $followedCourseIds[] = (int)$rowF['course_id'];
+        }
+        mysqli_stmt_close($stmtF);
     }
 }
 
@@ -160,12 +247,12 @@ if ($stmt) {
 }
 
 // -------------------------
-// 5) Corsi popolari (sidebar)
+// 5) Corsi popolari (sidebar / All courses)
 // -------------------------
 $popularCourses = [];
 
 $sqlCourses = "
-    SELECT c.name, COUNT(n.id) AS notes_count
+    SELECT c.id, c.name, COUNT(n.id) AS notes_count
     FROM course c
     JOIN course_offering co ON co.course_id = c.id
     JOIN topic t ON t.offering_id = co.id
@@ -178,7 +265,7 @@ $sqlCourses = "
 $resultCourses = mysqli_query($conn, $sqlCourses);
 if ($resultCourses) {
     while ($row = mysqli_fetch_assoc($resultCourses)) {
-        $popularCourses[] = $row['name'];
+        $popularCourses[] = $row['name']; // non lo usi, ma lo lascio se ti serve altrove
     }
 }
 ?>
@@ -354,12 +441,44 @@ if ($resultCourses) {
             <?php else: ?>
                 <div class="row g-3">
                     <?php foreach ($courseOptions as $course): ?>
+                        <?php
+                            $cid          = (int)$course['id'];
+                            $alreadyAdded = in_array($cid, $followedCourseIds, true);
+                        ?>
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="card border-0 shadow-sm rounded-4 h-100">
                                 <div class="card-body d-flex flex-column">
-                                    <h3 class="h6 mb-1">
-                                        <?php echo htmlspecialchars($course['name']); ?>
-                                    </h3>
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h3 class="h6 mb-0">
+                                            <?php echo htmlspecialchars($course['name']); ?>
+                                        </h3>
+
+                                        <?php if ($currentUserId !== null): ?>
+                                        <form method="post" class="ms-2">
+                                            <input type="hidden" name="page" value="home">
+                                            <input type="hidden" name="course_id" value="<?php echo $cid; ?>">
+
+                                            <?php if ($alreadyAdded): ?>
+                                                <button
+                                                    type="submit"
+                                                    name="unfollow_course"
+                                                    class="btn btn-sm btn-outline-danger"
+                                                >
+                                                    Remove course
+                                                </button>
+                                            <?php else: ?>
+                                                <button
+                                                    type="submit"
+                                                    name="follow_course"
+                                                    class="btn btn-sm btn-outline-success"
+                                                >
+                                                    Add course
+                                                </button>
+                                            <?php endif; ?>
+                                        </form>
+                                    <?php endif; ?>
+                                    
+                                    </div>
                                     <p class="text-muted small mb-3">
                                         Study programme course
                                     </p>
@@ -368,7 +487,7 @@ if ($resultCourses) {
                                         <?php
                                             $courseUrlParams = [
                                                 'page'      => 'home',
-                                                'course_id' => (int)$course['id'],
+                                                'course_id' => $cid,
                                                 'limit'     => $limit,
                                             ];
                                             if ($searchTerm !== '') {
