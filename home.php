@@ -75,9 +75,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $currentUserId !== null) {
 // -------------------------
 // 0) Parametri da $_GET
 // -------------------------
-$searchTerm   = trim($_GET['q'] ?? '');
-$courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
-$sort         = $_GET['sort'] ?? 'date'; // 'date' o 'votes'
+$searchTerm = trim($_GET['q'] ?? '');
+$sort       = $_GET['sort'] ?? 'date'; // 'date' o 'votes'
+
+$filterMyCourses = false;
+$courseFilter    = null;
+
+if (isset($_GET['course_id']) && $_GET['course_id'] !== '') {
+    if ($_GET['course_id'] === 'my' && $currentUserId !== null) {
+        $filterMyCourses = true;
+    } else {
+        $courseFilter = (int)$_GET['course_id'];
+    }
+}
 
 // "Load more" logic: quanti appunti mostrare
 $defaultLimit = 5;
@@ -130,12 +140,25 @@ $conditions = ["n.status = 'published'"];
 $params = [];
 $types  = "";
 
-// filtro corso
+// filtro corso specifico
 if (!is_null($courseFilter)) {
     $conditions[] = "c.id = ?";
     $types       .= "i";
     $params[]     = $courseFilter;
 }
+
+// filtro "My courses" → note dei corsi seguiti
+if ($filterMyCourses && $currentUserId !== null) {
+    $conditions[] = "EXISTS (
+        SELECT 1
+        FROM course_offering_follow cof
+        WHERE cof.offering_id = co.id
+          AND cof.user_id = ?
+    )";
+    $types   .= "i";
+    $params[] = $currentUserId;
+}
+
 
 // filtro testo
 if ($searchTerm !== '') {
@@ -314,14 +337,22 @@ if ($resultCourses) {
             <div class="col-6 col-lg-2">
                 <select name="course_id" class="form-select">
                     <option value="">All courses</option>
+
+                    <?php if ($currentUserId !== null): ?>
+                        <option value="my" <?php echo $filterMyCourses ? 'selected' : ''; ?>>
+                            My courses
+                        </option>
+                    <?php endif; ?>
+
                     <?php foreach ($courseOptions as $course): ?>
                         <option value="<?php echo (int)$course['id']; ?>"
-                            <?php echo ($courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
+                            <?php echo (!$filterMyCourses && $courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($course['name']); ?>
                         </option>
                     <?php endforeach; ?>
                 </select>
             </div>
+
 
             <div class="col-6 col-lg-2">
                 <select name="sort" class="form-select">
@@ -406,7 +437,9 @@ if ($resultCourses) {
                         if ($searchTerm !== '') {
                             $loadMoreParams['q'] = $searchTerm;
                         }
-                        if (!is_null($courseFilter)) {
+                        if ($filterMyCourses) {
+                            $loadMoreParams['course_id'] = 'my';
+                        } elseif (!is_null($courseFilter)) {
                             $loadMoreParams['course_id'] = $courseFilter;
                         }
                         if ($sort !== 'date') {
