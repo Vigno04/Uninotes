@@ -57,6 +57,7 @@ if ($result) {
                                         <th>Description</th>
                                         <th>Offerings</th>
                                         <th>Notes</th>
+                                        <th>Edit</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -68,12 +69,23 @@ if ($result) {
                                             </td>
                                             <td><?php echo (int)$c['offering_count']; ?></td>
                                             <td><?php echo (int)$c['note_count']; ?></td>
+                                            <td>
+                                                <a href="index.php?page=admin_course_edit&id=<?php echo (int)$c['id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                    Manage
+                                                </a>
+                                            </td>
+                                            
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
                     <?php endif; ?>
+
+                    <a href="index.php?page=admin_course_edit" class="btn btn-primary btn-sm">
+                        + Create new course
+                    </a>
 
                     <div class="mt-4">
                         <a href="index.php?page=admindashboard" class="btn btn-outline-secondary btn-sm">

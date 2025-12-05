@@ -52,6 +52,10 @@ class Router
             'file'=> 'user_notes_uploaded.php',
             'title' => 'Uninotes - Note Uploaded',
         ],
+        'admin_course_edit'=> [
+            'file'=> 'admin_course_edit.php',
+            'title'=> 'Uninotes - Edit Course',
+        ],
     ];
 
     public function getRoute()
