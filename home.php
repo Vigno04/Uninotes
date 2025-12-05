@@ -13,11 +13,14 @@ $isAdmin = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 // -------------------------
 // 0) Parametri da $_GET
 // -------------------------
-$searchTerm = trim($_GET['q'] ?? '');
+$searchTerm   = trim($_GET['q'] ?? '');
 $courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
-$sort = $_GET['sort'] ?? 'date'; // 'date' o 'votes'
-$currentPage = max(1, (int)($_GET['p'] ?? 1));
-$perPage = 5; // risultati per pagina quando si cerca
+$sort         = $_GET['sort'] ?? 'date'; // 'date' o 'votes'
+
+// "Load more" logic: quanti appunti mostrare
+$defaultLimit = 5;
+$loadMoreStep = 5;
+$limit        = isset($_GET['limit']) ? max($defaultLimit, (int)$_GET['limit']) : $defaultLimit;
 
 // -------------------------
 // 1) Corsi disponibili per il filtro (dropdown)
@@ -68,10 +71,9 @@ if ($sort === 'votes') {
 }
 
 // -------------------------
-// 3) Se sto cercando → calcolo il totale per la paginazione
+// 3) Conteggio totale SOLO se sto cercando/filtrando
 // -------------------------
 $totalResults = 0;
-$totalPages = 1;
 
 if ($searchTerm !== '' || !is_null($courseFilter)) {
     $sqlCount = "
@@ -95,17 +97,10 @@ if ($searchTerm !== '' || !is_null($courseFilter)) {
         }
         mysqli_stmt_close($stmtCount);
     }
-
-    if ($totalResults > 0) {
-        $totalPages = (int)ceil($totalResults / $perPage);
-        if ($currentPage > $totalPages) {
-            $currentPage = $totalPages;
-        }
-    }
 }
 
 // -------------------------
-// 4) Query effettiva per le note (con LIMIT/OFFSET)
+// 4) Query effettiva per le note (con LIMIT)
 // -------------------------
 $recentNotes = [];
 
@@ -131,76 +126,37 @@ $sqlBase = "
     $whereClause
     GROUP BY n.id
     ORDER BY $orderBy
+    LIMIT ?
 ";
 
-// se c'è ricerca o filtro corso → paginazione
-// altrimenti → solo ultimi 3 (come "home" normale)
-if ($searchTerm !== '' || !is_null($courseFilter)) {
-    $offset = ($currentPage - 1) * $perPage;
-    $sqlBase .= " LIMIT ? OFFSET ?";
+// aggiungo il LIMIT come ultimo parametro
+$typesWithLimit      = $types . "i";
+$paramsWithLimit     = $params;
+$paramsWithLimit[]   = $limit;
 
-    // aggiungo i parametri per limit/offset
-    $typesWithLimit = $types . "ii";
-    $paramsWithLimit = $params;
-    $paramsWithLimit[] = $perPage;
-    $paramsWithLimit[] = $offset;
+$stmt = mysqli_prepare($conn, $sqlBase);
+if ($stmt) {
+    mysqli_stmt_bind_param($stmt, $typesWithLimit, ...$paramsWithLimit);
+    mysqli_stmt_execute($stmt);
+    $res = mysqli_stmt_get_result($stmt);
+    while ($row = mysqli_fetch_assoc($res)) {
 
-    $stmt = mysqli_prepare($conn, $sqlBase);
-    if ($stmt) {
-        if (!empty($paramsWithLimit)) {
-            mysqli_stmt_bind_param($stmt, $typesWithLimit, ...$paramsWithLimit);
+        $exam = $row['course_name'];
+        if (!empty($row['teacher_name'])) {
+            $exam .= ' - ' . $row['teacher_name'];
         }
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        while ($row = mysqli_fetch_assoc($res)) {
 
-            $exam = $row['course_name'];
-            if (!empty($row['teacher_name'])) {
-                $exam .= ' - ' . $row['teacher_name'];
-            }
-
-            $recentNotes[] = [
-                'id'=> $row['id'],
-                "title"      => $row["title"],
-                "course"     => $row["course_name"],
-                "exam"       => $exam,
-                "author"     => $row["author_name"] ?: "Anonimo",
-                "date"       => $row["note_date"],
-                "likes"      => (int)$row["vote_count"],
-            ];
-        }
-        mysqli_stmt_close($stmt);
+        $recentNotes[] = [
+            'id'=> $row['id'],
+            "title"      => $row["title"],
+            "course"     => $row["course_name"],
+            "exam"       => $exam,
+            "author"     => $row["author_name"] ?: "Anonimo",
+            "date"       => $row["note_date"],
+            "likes"      => (int)$row["vote_count"],
+        ];
     }
-} else {
-    // nessuna ricerca / nessun filtro → ultimi 3 appunti
-    $sqlBase .= " LIMIT 3";
-
-    $stmt = mysqli_prepare($conn, $sqlBase);
-    if ($stmt) {
-        if (!empty($params)) {
-            mysqli_stmt_bind_param($stmt, $types, ...$params);
-        }
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        while ($row = mysqli_fetch_assoc($res)) {
-
-            $exam = $row['course_name'];
-            if (!empty($row['teacher_name'])) {
-                $exam .= ' - ' . $row['teacher_name'];
-            }
-
-            $recentNotes[] = [
-                'id'=> $row['id'],
-                "title"      => $row["title"],
-                "course"     => $row["course_name"],
-                "exam"       => $exam,
-                "author"     => $row["author_name"] ?: "Anonimo",
-                "date"       => $row["note_date"],
-                "likes"      => (int)$row["vote_count"],
-            ];
-        }
-        mysqli_stmt_close($stmt);
-    }
+    mysqli_stmt_close($stmt);
 }
 
 // -------------------------
@@ -224,24 +180,6 @@ if ($resultCourses) {
     while ($row = mysqli_fetch_assoc($resultCourses)) {
         $popularCourses[] = $row['name'];
     }
-}
-
-// helper per costruire URL di paginazione mantenendo i filtri
-function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
-    $params = [
-        'page' => 'home',
-        'p'    => $page,
-    ];
-    if ($searchTerm !== '') {
-        $params['q'] = $searchTerm;
-    }
-    if (!is_null($courseFilter)) {
-        $params['course_id'] = $courseFilter;
-    }
-    if ($sort !== '' && $sort !== 'date') {
-        $params['sort'] = $sort;
-    }
-    return 'index.php?' . http_build_query($params);
 }
 ?>
 
@@ -273,6 +211,8 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
 
         <form class="row g-2" method="get" action="index.php">
             <input type="hidden" name="page" value="home">
+            <!-- conserva il numero di risultati già caricati -->
+            <input type="hidden" name="limit" value="<?php echo (int)$limit; ?>">
 
             <div class="col-12 col-lg-6">
                 <input
@@ -317,9 +257,6 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
         <?php if ($searchTerm !== '' || !is_null($courseFilter)): ?>
             <p class="text-muted small mt-2 mb-0">
                 Found <?php echo $totalResults; ?> notes.
-                <?php if ($totalPages > 1): ?>
-                    (Page <?php echo $currentPage; ?> di <?php echo $totalPages; ?>)
-                <?php endif; ?>
             </p>
         <?php endif; ?>
     </div>
@@ -338,17 +275,13 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                                 <div>
                                     <a href="index.php?page=note_view&id=<?php echo htmlspecialchars($note['id']); ?>" class="small text-primary text-decoration-none">
                                         <h2 class="h5 mb-1">
-                                            <!--Note title -->
-                                            <!-- href="index.php?page=note_edit" -->
                                             <?php echo htmlspecialchars($note["title"]); ?>
                                         </h2>
                                     </a>
 
                                     <p class="mb-0 text-muted">
-                                        <!-- Course of the note -->
                                         <?php echo htmlspecialchars($note["course"]); ?>
                                     </p>
-
                                 </div>
                             </div>
 
@@ -376,81 +309,89 @@ function buildPageUrl($page, $searchTerm, $courseFilter, $sort) {
                     </div>
                 <?php endforeach; ?>
 
-                <!-- Paginazione -->
-                <?php if ($searchTerm !== '' || !is_null($courseFilter)): ?>
-                    <?php if ($totalPages > 1): ?>
-                        <nav aria-label="Paginazione appunti">
-                            <ul class="pagination mt-3">
-                                <li class="page-item <?php echo $currentPage <= 1 ? 'disabled' : ''; ?>">
-                                    <a class="page-link"
-                                       href="<?php echo $currentPage > 1 ? buildPageUrl($currentPage - 1, $searchTerm, $courseFilter, $sort) : '#'; ?>">
-                                        « Previous
-                                    </a>
-                                </li>
-
-                                <li class="page-item disabled">
-                                    <span class="page-link">
-                                        Page <?php echo $currentPage; ?> di <?php echo $totalPages; ?>
-                                    </span>
-                                </li>
-
-                                <li class="page-item <?php echo $currentPage >= $totalPages ? 'disabled' : ''; ?>">
-                                    <a class="page-link"
-                                       href="<?php echo $currentPage < $totalPages ? buildPageUrl($currentPage + 1, $searchTerm, $courseFilter, $sort) : '#'; ?>">
-                                        Next »
-                                    </a>
-                                </li>
-                            </ul>
-                        </nav>
-                    <?php endif; ?>
-                <?php endif; ?>
+                <!-- Sempre e solo "Load more" -->
+                <div class="d-flex justify-content-center mt-3">
+                    <?php
+                        $loadMoreParams = [
+                            'page'  => 'home',
+                            'limit' => $limit + $loadMoreStep,
+                        ];
+                        if ($searchTerm !== '') {
+                            $loadMoreParams['q'] = $searchTerm;
+                        }
+                        if (!is_null($courseFilter)) {
+                            $loadMoreParams['course_id'] = $courseFilter;
+                        }
+                        if ($sort !== 'date') {
+                            $loadMoreParams['sort'] = $sort;
+                        }
+                        $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
+                    ?>
+                    <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
+                        Load more
+                    </a>
+                </div>
             <?php endif; ?>
         </div>
 
-            <!-- Sezione All the courses -->
-            <hr class="my-5">
-            <div class="mb-4">
-                <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-                    <div class="d-flex align-items-center gap-2">
-                        <span class="fs-4">🎓</span>
-                        <div>
-                            <h2 class="h4 mb-1">All courses</h2>
-                            <small class="text-muted">
-                                Browse all courses that currently have published notes.
-                            </small>
-                        </div>
+        <!-- Sezione All the courses -->
+        <hr class="my-5">
+        <div class="mb-4">
+            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="fs-4">🎓</span>
+                    <div>
+                        <h2 class="h4 mb-1">All courses</h2>
+                        <small class="text-muted">
+                            Browse all courses that currently have published notes.
+                        </small>
                     </div>
                 </div>
+            </div>
 
-                <?php if (empty($courseOptions)): ?>
-                    <p class="text-muted">There are no courses with notes yet.</p>
-                <?php else: ?>
-                    <div class="row g-3">
-                        <?php foreach ($courseOptions as $course): ?>
-                            <div class="col-12 col-md-6 col-lg-4">
-                                <div class="card border-0 shadow-sm rounded-4 h-100">
-                                    <div class="card-body d-flex flex-column">
-                                        <h3 class="h6 mb-1">
-                                            <?php echo htmlspecialchars($course['name']); ?>
-                                        </h3>
-                                        <p class="text-muted small mb-3">
-                                            Study programme course
-                                        </p>
+            <?php if (empty($courseOptions)): ?>
+                <p class="text-muted">There are no courses with notes yet.</p>
+            <?php else: ?>
+                <div class="row g-3">
+                    <?php foreach ($courseOptions as $course): ?>
+                        <div class="col-12 col-md-6 col-lg-4">
+                            <div class="card border-0 shadow-sm rounded-4 h-100">
+                                <div class="card-body d-flex flex-column">
+                                    <h3 class="h6 mb-1">
+                                        <?php echo htmlspecialchars($course['name']); ?>
+                                    </h3>
+                                    <p class="text-muted small mb-3">
+                                        Study programme course
+                                    </p>
 
-                                        <div class="mt-auto d-flex justify-content-between align-items-center">
-                                            <a
-                                                href="<?php echo buildPageUrl(1, $searchTerm, (int)$course['id'], $sort); ?>"
-                                                class="small text-primary text-decoration-none"
-                                            >
-                                                View notes → 
-                                            </a>
-                                        </div>
+                                    <div class="mt-auto d-flex justify-content-between align-items-center">
+                                        <?php
+                                            $courseUrlParams = [
+                                                'page'      => 'home',
+                                                'course_id' => (int)$course['id'],
+                                                'limit'     => $limit,
+                                            ];
+                                            if ($searchTerm !== '') {
+                                                $courseUrlParams['q'] = $searchTerm;
+                                            }
+                                            if ($sort !== 'date') {
+                                                $courseUrlParams['sort'] = $sort;
+                                            }
+                                            $courseUrl = 'index.php?' . http_build_query($courseUrlParams);
+                                        ?>
+                                        <a
+                                            href="<?php echo htmlspecialchars($courseUrl); ?>"
+                                            class="small text-primary text-decoration-none"
+                                        >
+                                            View notes → 
+                                        </a>
                                     </div>
                                 </div>
                             </div>
-                        <?php endforeach; ?>
-                    </div>
-                <?php endif; ?>
-            </div>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </div>
     </div>
 </div>
