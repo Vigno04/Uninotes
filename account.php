@@ -162,7 +162,7 @@ $stats = [
 
 $activity = [
     'uploaded'   => 0,
-    'downloaded' => 0,
+    'upvoted' => 0,
 ];
 
 // NOTE CARICATE (upload)
@@ -175,6 +175,19 @@ if ($uploadRow = mysqli_fetch_assoc($uploadRes)) {
     $activity["uploaded"] = (int)$uploadRow["c"];
 }
 mysqli_stmt_close($uploadStmt);
+
+
+// NOTE UPVOTATE (upvote = 1 nella tabella vote)
+$upvoteSql = "SELECT COUNT(DISTINCT note_id) AS c FROM vote WHERE user_id = ? AND vote = 1";
+$upvoteStmt = mysqli_prepare($conn, $upvoteSql);
+mysqli_stmt_bind_param($upvoteStmt, "i", $personId);
+mysqli_stmt_execute($upvoteStmt);
+$upvoteRes = mysqli_stmt_get_result($upvoteStmt);
+if ($upvoteRow = mysqli_fetch_assoc($upvoteRes)) {
+    $activity["upvoted"] = (int)$upvoteRow["c"];
+}
+mysqli_stmt_close($upvoteStmt);
+
 
 
 if ($mode === 'admin') {
@@ -337,24 +350,37 @@ if ($mode === 'admin') {
                     e contiamo quante volte compare.
                     -->
 
+                    
                     <div class="row g-3">
                         <div class="col-12 col-md-6">
-                            <div class="border rounded-4 py-4 px-3 text-center bg-light">
-                                <div class="fs-2 mb-2">📘</div>
-                                <div class="fw-semibold">Notes Uploaded</div>
-                                <div class="text-muted small">
-                                    <?php echo (int)$activity['uploaded']; ?>
+                            <a href="index.php?page=user_notes_uploaded"
+                            class="text-decoration-none text-reset">
+                                <div class="border rounded-4 py-4 px-3 text-center bg-light hover-shadow">
+                                    <div class="fs-2 mb-2">📘</div>
+                                    <div class="fw-semibold">Notes Uploaded</div>
+                                    <div class="text-muted small">
+                                        <?php echo (int)$activity['uploaded']; ?>
+                                    </div>
                                 </div>
-                            </div>
+                            </a>
                         </div>
+
                         <div class="col-12 col-md-6">
-                            <div class="border rounded-4 py-4 px-3 text-center bg-light">
-                                <div class="fs-2 mb-2">📥</div>
-                                <div class="fw-semibold">Notes Downloaded</div>
-                                <div class="text-muted small">0</div>
-                            </div>
+                            <a href="index.php?page=user_notes_upvoted"
+                            class="text-decoration-none text-reset">
+                                <div class="border rounded-4 py-4 px-3 text-center bg-light hover-shadow">
+                                    <div class="fs-2 mb-2">👍</div>
+                                    <div class="fw-semibold">Notes Upvoted</div>
+                                    <div class="text-muted small">
+                                        <?php echo (int)$activity['upvoted']; ?>
+                                    </div>
+                                </div>
+                            </a>
                         </div>
                     </div>
+
+
+
                 </div>
             </div>
         </div>

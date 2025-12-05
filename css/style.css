@@ -119,3 +119,11 @@ body.auth-page {
         padding-inline: 1.5rem;
     }
 }
+
+.hover-shadow {
+    transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+.hover-shadow:hover {
+    box-shadow: 0 .5rem 1rem rgba(0,0,0,.15);
+    transform: translateY(-2px);
+}

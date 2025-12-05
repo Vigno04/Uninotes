@@ -37,12 +37,20 @@ class Router
         'note_view' => [
             'file'  => 'note_view.php',
             'template' => 'template/note_view.php',
-            'title' => 'Uninotes - Nota',
+            'title' => 'Uninotes - Note',
         ],
         'note_edit' => [
             'file'  => 'note_edit.php',
             'template' => 'template/note_edit.php',
-            'title' => 'Uninotes - Nota',
+            'title' => 'Uninotes - Note',
+        ],
+        'user_notes_upvoted'=> [
+            'file'=> 'user_notes_upvoted.php',
+            'title' => 'Uninotes - Note Upvoted',
+        ],
+        'user_notes_uploaded'=> [
+            'file'=> 'user_notes_uploaded.php',
+            'title' => 'Uninotes - Note Uploaded',
         ],
     ];
 
