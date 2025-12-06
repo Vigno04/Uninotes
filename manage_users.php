@@ -67,17 +67,29 @@ $sql = "
         u.created_at AS user_created,
         u.last_login,
         u.deleted_at,
-        COUNT(n.id) AS note_count
+        COUNT(n.id) AS note_count,
+
+        -- Teacher info (aggregated)
+        MAX(t.person_id)      AS teacher_person_id,
+        MAX(t.department)     AS teacher_department,
+        MAX(t.unibo_site)     AS teacher_unibo_site,
+        MAX(t.phone_number)   AS teacher_phone_number,
+        MAX(t.personal_site)  AS teacher_personal_site
+
     FROM person p
     JOIN user u ON p.id = u.person_id
-    LEFT JOIN note n ON n.owner_id = u.person_id
+    LEFT JOIN note n    ON n.owner_id = u.person_id
+    LEFT JOIN teacher t ON t.person_id = u.person_id
     $where
-    GROUP BY p.id, p.name, p.surname, p.email, u.role, u.created_at, u.last_login, u.deleted_at
+    GROUP BY 
+        p.id, p.name, p.surname, p.email,
+        u.role, u.created_at, u.last_login, u.deleted_at
     ORDER BY 
-        (u.role = 'admin') DESC,   -- prima gli admin
+        (u.role = 'admin') DESC,
         p.surname,
         p.name
 ";
+
 
 if ($where !== '') {
     $stmt = mysqli_prepare($conn, $sql);
@@ -94,6 +106,41 @@ if ($result) {
         $users[] = $row;
     }
 }
+
+// Fetch pending teacher requests
+// ----- Teacher request status for this user -----
+$isTeacher         = false;
+$isTeacherPending  = false;
+
+$sqlT = "
+    SELECT department, unibo_site, phone_number, personal_site
+    FROM teacher
+    WHERE person_id = ?
+    LIMIT 1
+";
+
+$stmtT = mysqli_prepare($conn, $sqlT);
+if ($stmtT) {
+    mysqli_stmt_bind_param($stmtT, "i", $personId);
+    mysqli_stmt_execute($stmtT);
+    $resT = mysqli_stmt_get_result($stmtT);
+    if ($rowT = mysqli_fetch_assoc($resT)) {
+        // row exists → either pending or full teacher
+        $allNull =
+            is_null($rowT['department']) &&
+            is_null($rowT['unibo_site']) &&
+            is_null($rowT['phone_number']) &&
+            is_null($rowT['personal_site']);
+
+        if ($allNull) {
+            $isTeacherPending = true;   // request sent, waiting for admin
+        } else {
+            $isTeacher = true;          // already a full teacher
+        }
+    }
+    mysqli_stmt_close($stmtT);
+}
+
 ?>
 
 <div class="container py-4 py-lg-5">
@@ -142,6 +189,7 @@ if ($result) {
                                         <th>Email</th>
                                         <th>Role</th>
                                         <th>Status</th>
+                                        <th>Teacher</th>
                                         <th>Notes</th>
                                         <th>Joined</th>
                                         <th>Last login</th>
@@ -154,7 +202,27 @@ if ($result) {
                                             $isDeleted = !is_null($u['deleted_at']);
                                             $isAdmin   = ($u['role'] === 'admin');
                                             $isSelfRow = ($u['id'] == $currentAdminId);
-                                        ?>
+                                            // Teacher / pending teacher flags
+                                            $hasTeacherRow = !is_null($u['teacher_person_id']);
+
+                                            $isTeacher        = false;
+                                            $isTeacherPending = false;
+
+                                            if ($hasTeacherRow) {
+                                                $allNull =
+                                                    is_null($u['teacher_department']) &&
+                                                    is_null($u['teacher_unibo_site']) &&
+                                                    is_null($u['teacher_phone_number']) &&
+                                                    is_null($u['teacher_personal_site']);
+
+                                                if ($allNull) {
+                                                    $isTeacherPending = true; // row exists but all detail fields NULL
+                                                } else {
+                                                    $isTeacher = true;        // at least one teacher field filled
+                                                }
+                                            }
+
+                                       ?>
                                         <tr class="<?php echo $isDeleted ? 'table-light text-muted' : ''; ?>">
                                             <td><?php echo htmlspecialchars($u['name'] . ' ' . $u['surname']); ?></td>
                                             <td><?php echo htmlspecialchars($u['email']); ?></td>
@@ -170,6 +238,16 @@ if ($result) {
                                                     <span class="badge bg-success">Active</span>
                                                 <?php endif; ?>
                                             </td>
+                                            <td>
+                                                <?php if ($isTeacher): ?>
+                                                    <span class="badge bg-info text-dark">Teacher</span>
+                                                <?php elseif ($isTeacherPending): ?>
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                <?php else: ?>
+                                                    <span class="text-muted small">—</span>
+                                                <?php endif; ?>
+                                            </td>
+
                                             <td><?php echo (int)$u['note_count']; ?></td>
                                             <td>
                                                 <?php echo htmlspecialchars(date('d/m/Y', strtotime($u['user_created']))); ?>
