@@ -5,16 +5,14 @@
 
 
 // COurse
+// Course
 $courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
 
 $courseOptions = [];
 $sqlCourseOptions = "
-    SELECT DISTINCT c.id, c.name
-    FROM course c
-    JOIN course_offering co ON co.course_id = c.id
-    JOIN topic t ON t.offering_id = co.id
-    JOIN note n ON n.topic_id = t.id AND n.status = 'published'
-    ORDER BY c.name
+    SELECT id, name
+    FROM course
+    ORDER BY name
 ";
 $resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
 if ($resultCourseOptions) {
@@ -22,6 +20,7 @@ if ($resultCourseOptions) {
         $courseOptions[] = $row;
     }
 }
+
 
 // Topic
 $topicFilter = isset($_GET['topic_id']) && $_GET['topic_id'] !== '' ? (int)$_GET['topic_id'] : null;

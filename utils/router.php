@@ -68,6 +68,10 @@ class Router
             'file'=> 'teacher_requests.php',
             'title'=> 'Uninotes - Manage Teachers',
         ],
+        'admin_edit_teacher' => [
+            'file'=> 'admin_edit_teacher.php',
+            'title'=> 'Uninotes - Edit Teachers',
+        ],
     ];
 
     public function getRoute()

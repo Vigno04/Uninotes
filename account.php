@@ -203,6 +203,45 @@ if ($mode === 'admin') {
     $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM correction WHERE resolved = 0");
     if ($res) $stats['corrections'] = (int)mysqli_fetch_assoc($res)['c'];
 }
+
+
+
+$userId = $_SESSION['person_id']; 
+
+// Check if the user already has a teacher row
+$sql = "SELECT person_id FROM teacher WHERE person_id = ?";
+$stmt = mysqli_prepare($conn, $sql);
+mysqli_stmt_bind_param($stmt, "i", $userId);
+mysqli_stmt_execute($stmt);
+$res = mysqli_stmt_get_result($stmt);
+$hasTeacherRequest = mysqli_fetch_assoc($res) ? true : false;
+mysqli_stmt_close($stmt);
+
+// --- Handle request to become a teacher ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
+
+    // Check if a teacher row already exists (prevent duplication)
+    $sqlCheck = "SELECT person_id FROM teacher WHERE person_id = ?";
+    $stmtC = mysqli_prepare($conn, $sqlCheck);
+    mysqli_stmt_bind_param($stmtC, "i", $userId);
+    mysqli_stmt_execute($stmtC);
+    $exists = mysqli_stmt_get_result($stmtC)->num_rows > 0;
+    mysqli_stmt_close($stmtC);
+
+    if (!$exists) {
+        // Insert an empty teacher row → marks as PENDING
+        $sqlInsert = "INSERT INTO teacher (person_id) VALUES (?)";
+        $stmt = mysqli_prepare($conn, $sqlInsert);
+        mysqli_stmt_bind_param($stmt, "i", $userId);
+        mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+    }
+
+    // PRG redirect
+    header("Location: index.php?page=account"); // ← change accordingly
+    exit;
+}
+
 ?>
 
 <div class="container py-4 py-lg-5">
@@ -248,9 +287,33 @@ if ($mode === 'admin') {
                         </div>
                     </div>
 
-                    <div class="ms-md-auto">
-                        <a href="logout.php" class="btn btn-outline-danger btn-sm">Logout</a>
-                    </div>
+
+<div class="ms-md-auto d-flex flex-wrap gap-2 align-items-center profile-actions">
+    <?php if (!$hasTeacherRequest): ?>
+        <form method="post" class="m-0">
+            <button type="submit"
+                    name="request_teacher"
+                    class="btn btn-outline-primary btn-sm d-flex align-items-center gap-1">
+                <i class="bi bi-mortarboard"></i>
+                <span>Become a teacher</span>
+            </button>
+        </form>
+    <?php else: ?>
+        <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" disabled>
+            <i class="bi bi-hourglass-split"></i>
+            <span>Teacher request pending</span>
+        </button>
+    <?php endif; ?>
+
+    <a href="logout.php"
+       class="btn btn-outline-danger btn-sm d-flex align-items-center gap-1">
+        <i class="bi bi-box-arrow-right"></i>
+        <span>Logout</span>
+    </a>
+</div>
+
+
+
                 </div>
             </div>
             <div class="card border-0 shadow-sm rounded-4 mb-4">

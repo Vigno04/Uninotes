@@ -261,6 +261,7 @@ if ($stmtT) {
                                                 }
                                                 ?>
                                             </td>
+                                            <!-- From here -->
                                             <td class="text-end">
                                                 <div class="d-inline-flex gap-1">
 
@@ -297,7 +298,14 @@ if ($stmtT) {
                                                             </button>
                                                         <?php endif; ?>
                                                     </form>
-
+                                                
+                                                     <!-- Review / Edit teacher (pending or active) -->
+                                                    <?php if ($isTeacher || $isTeacherPending): ?>
+                                                        <a href="index.php?page=admin_edit_teacher&user_id=<?php echo (int)$u['id']; ?>"
+                                                        class="btn btn-outline-info btn-sm">
+                                                            Review teacher
+                                                        </a>
+                                                    <?php endif; ?> 
                                                 </div>
                                             </td>
                                         </tr>
