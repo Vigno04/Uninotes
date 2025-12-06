@@ -237,6 +237,10 @@ if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
                         <a href="index.php?page=manage_courses" class="btn btn-outline-primary">
                             Manage courses
                         </a>
+                        <a href="index.php?page=admin_teacher_create" class="btn btn-outline-primary">
+                            Manage teachers
+                        </a>
+
                         <a href="index.php?page=view_reports" class="btn btn-outline-secondary">
                             View reports
                         </a>
