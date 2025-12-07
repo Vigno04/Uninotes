@@ -95,18 +95,19 @@ $loadMoreStep = 5;
 $limit        = isset($_GET['limit']) ? max($defaultLimit, (int)$_GET['limit']) : $defaultLimit;
 
 // -------------------------
-// 1) Corsi disponibili per il filtro (dropdown)
+// 1) Corsi disponibili (tutti i corsi)
 // -------------------------
-$courseOptions = [];
+$allCourseOptions = [];
 $sqlCourseOptions = "
     SELECT id, name FROM course;
 ";
 $resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
 if ($resultCourseOptions) {
     while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
-        $courseOptions[] = $row;
+        $allCourseOptions[] = $row;
     }
 }
+
 
 // -------------------------
 // 1b) Corsi già seguiti dall'utente (per disabilitare il bottone)
@@ -132,6 +133,23 @@ if ($currentUserId !== null) {
         mysqli_stmt_close($stmtF);
     }
 }
+
+// -------------------------
+// 1c) Corsi per il filtro note
+//     - se loggato e segue corsi → mostra solo quelli
+//     - altrimenti → tutti i corsi
+// -------------------------
+$filterCourseOptions = $allCourseOptions;
+
+if ($currentUserId !== null && !empty($followedCourseIds)) {
+    $filterCourseOptions = array_values(array_filter(
+        $allCourseOptions,
+        function ($c) use ($followedCourseIds) {
+            return in_array((int)$c['id'], $followedCourseIds, true);
+        }
+    ));
+}
+
 
 // -------------------------
 // 2) Costruisco la query base (senza LIMIT)
@@ -336,7 +354,7 @@ if ($resultCourses) {
 
             <div class="col-6 col-lg-2">
                 <select name="course_id" class="form-select">
-                    <option value="">All courses</option>
+
 
                     <?php if ($currentUserId !== null): ?>
                         <option value="my" <?php echo $filterMyCourses ? 'selected' : ''; ?>>
@@ -344,12 +362,13 @@ if ($resultCourses) {
                         </option>
                     <?php endif; ?>
 
-                    <?php foreach ($courseOptions as $course): ?>
+                    <?php foreach ($filterCourseOptions as $course): ?>
                         <option value="<?php echo (int)$course['id']; ?>"
                             <?php echo (!$filterMyCourses && $courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
                             <?php echo htmlspecialchars($course['name']); ?>
                         </option>
                     <?php endforeach; ?>
+
                 </select>
             </div>
 
@@ -469,11 +488,11 @@ if ($resultCourses) {
                 </div>
             </div>
 
-            <?php if (empty($courseOptions)): ?>
+            <?php if (empty($allCourseOptions)): ?>
                 <p class="text-muted">There are no courses with notes yet.</p>
             <?php else: ?>
                 <div class="row g-3">
-                    <?php foreach ($courseOptions as $course): ?>
+                    <?php foreach ($allCourseOptions as $course): ?>
                         <?php
                             $cid          = (int)$course['id'];
                             $alreadyAdded = in_array($cid, $followedCourseIds, true);
