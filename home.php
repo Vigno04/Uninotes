@@ -203,7 +203,8 @@ if ($sort === 'votes') {
 // -------------------------
 $totalResults = 0;
 
-if ($searchTerm !== '' || !is_null($courseFilter)) {
+if ($searchTerm !== '' || !is_null($courseFilter) || $filterMyCourses) {
+
     $sqlCount = "
         SELECT COUNT(DISTINCT n.id) AS total
         FROM note n
@@ -390,11 +391,12 @@ if ($resultCourses) {
             </div>
         </form>
 
-        <?php if ($searchTerm !== '' || !is_null($courseFilter)): ?>
+        <?php if ($searchTerm !== '' || !is_null($courseFilter) || $filterMyCourses): ?>
             <p class="text-muted small mt-2 mb-0">
                 Found <?php echo $totalResults; ?> notes.
             </p>
         <?php endif; ?>
+
     </div>
 
     <div class="row">
@@ -446,29 +448,42 @@ if ($resultCourses) {
                 <?php endforeach; ?>
 
                 <!-- Sempre e solo "Load more" -->
-                <div class="d-flex justify-content-center mt-3">
-                    <?php
-                        $loadMoreParams = [
-                            'page'  => 'home',
-                            'limit' => $limit + $loadMoreStep,
-                        ];
-                        if ($searchTerm !== '') {
-                            $loadMoreParams['q'] = $searchTerm;
-                        }
-                        if ($filterMyCourses) {
-                            $loadMoreParams['course_id'] = 'my';
-                        } elseif (!is_null($courseFilter)) {
-                            $loadMoreParams['course_id'] = $courseFilter;
-                        }
-                        if ($sort !== 'date') {
-                            $loadMoreParams['sort'] = $sort;
-                        }
-                        $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
-                    ?>
-                    <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
-                        Load more
-                    </a>
-                </div>
+                <?php
+                    // Se sto filtrando e ho il totale, capisco se ci sono ancora note
+                    $hasMore = true;
+                    if ($totalResults > 0 && $limit >= $totalResults) {
+                        $hasMore = false;
+                    }
+                ?>
+
+                <?php if ($hasMore): ?>
+                    <div class="d-flex justify-content-center mt-3">
+                        <?php
+                            $loadMoreParams = [
+                                'page'  => 'home',
+                                'limit' => $limit + $loadMoreStep,
+                            ];
+                            if ($searchTerm !== '') {
+                                $loadMoreParams['q'] = $searchTerm;
+                            }
+                            if ($filterMyCourses) {
+                                $loadMoreParams['course_id'] = 'my';
+                            } elseif (!is_null($courseFilter)) {
+                                $loadMoreParams['course_id'] = $courseFilter;
+                            }
+                            if ($sort !== 'date') {
+                                $loadMoreParams['sort'] = $sort;
+                            }
+                            $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
+                        ?>
+                        <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
+                            Load more
+                        </a>
+                    </div>
+                <?php endif; ?>
+
+
+
             <?php endif; ?>
         </div>
     </div>
