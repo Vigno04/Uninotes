@@ -42,6 +42,12 @@ $profilePage = 'account';
                     </a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link <?php echo $currentPage === 'courses' ? 'active' : ''; ?>"
+                       href="index.php?page=courses">
+                        Courses
+                    </a>
+                </li>
+                <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'note_edit' ? 'active' : ''; ?>"
                        href="index.php?page=note_edit">
                         Create Note

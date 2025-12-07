@@ -355,7 +355,6 @@ if ($resultCourses) {
             <div class="col-6 col-lg-2">
                 <select name="course_id" class="form-select">
 
-
                     <?php if ($currentUserId !== null): ?>
                         <option value="my" <?php echo $filterMyCourses ? 'selected' : ''; ?>>
                             My courses
@@ -469,98 +468,6 @@ if ($resultCourses) {
                     <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
                         Load more
                     </a>
-                </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Sezione All the courses -->
-        <hr class="my-5">
-        <div class="mb-4">
-            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-4">🎓</span>
-                    <div>
-                        <h2 class="h4 mb-1">All courses</h2>
-                        <small class="text-muted">
-                            Browse all courses that currently have published notes.
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <?php if (empty($allCourseOptions)): ?>
-                <p class="text-muted">There are no courses with notes yet.</p>
-            <?php else: ?>
-                <div class="row g-3">
-                    <?php foreach ($allCourseOptions as $course): ?>
-                        <?php
-                            $cid          = (int)$course['id'];
-                            $alreadyAdded = in_array($cid, $followedCourseIds, true);
-                        ?>
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card border-0 shadow-sm rounded-4 h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h3 class="h6 mb-0">
-                                            <?php echo htmlspecialchars($course['name']); ?>
-                                        </h3>
-
-                                        <?php if ($currentUserId !== null): ?>
-                                        <form method="post" class="ms-2">
-                                            <input type="hidden" name="page" value="home">
-                                            <input type="hidden" name="course_id" value="<?php echo $cid; ?>">
-
-                                            <?php if ($alreadyAdded): ?>
-                                                <button
-                                                    type="submit"
-                                                    name="unfollow_course"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                >
-                                                    Remove course
-                                                </button>
-                                            <?php else: ?>
-                                                <button
-                                                    type="submit"
-                                                    name="follow_course"
-                                                    class="btn btn-sm btn-outline-success"
-                                                >
-                                                    Add course
-                                                </button>
-                                            <?php endif; ?>
-                                        </form>
-                                    <?php endif; ?>
-                                    
-                                    </div>
-                                    <p class="text-muted small mb-3">
-                                        Study programme course
-                                    </p>
-
-                                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                                        <?php
-                                            $courseUrlParams = [
-                                                'page'      => 'home',
-                                                'course_id' => $cid,
-                                                'limit'     => $limit,
-                                            ];
-                                            if ($searchTerm !== '') {
-                                                $courseUrlParams['q'] = $searchTerm;
-                                            }
-                                            if ($sort !== 'date') {
-                                                $courseUrlParams['sort'] = $sort;
-                                            }
-                                            $courseUrl = 'index.php?' . http_build_query($courseUrlParams);
-                                        ?>
-                                        <a
-                                            href="<?php echo htmlspecialchars($courseUrl); ?>"
-                                            class="small text-primary text-decoration-none"
-                                        >
-                                            View notes → 
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
                 </div>
             <?php endif; ?>
         </div>
