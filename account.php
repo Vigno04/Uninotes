@@ -206,16 +206,39 @@ if ($mode === 'admin') {
 
 
 
-$userId = $_SESSION['person_id']; 
+$userId = (int)$_SESSION['person_id'];
 
-// Check if the user already has a teacher row
-$sql = "SELECT person_id FROM teacher WHERE person_id = ?";
+// Check teacher status (pending vs confirmed)
+$sql = "
+    SELECT department, unibo_site, phone_number, personal_site
+    FROM teacher
+    WHERE person_id = ?
+    LIMIT 1
+";
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "i", $userId);
 mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$hasTeacherRequest = mysqli_fetch_assoc($res) ? true : false;
+$res   = mysqli_stmt_get_result($stmt);
+$row   = mysqli_fetch_assoc($res);
 mysqli_stmt_close($stmt);
+
+$hasTeacherRow      = (bool)$row;
+$isTeacherConfirmed = false; // default
+
+if ($hasTeacherRow) {
+    // pending if ALL these fields are NULL
+    $allNull = (
+        is_null($row['department']) &&
+        is_null($row['unibo_site']) &&
+        is_null($row['phone_number']) &&
+        is_null($row['personal_site'])
+    );
+
+    $isTeacherConfirmed = !$allNull;
+}
+
+// for convenience: “request exists but still pending”
+$hasTeacherRequest = $hasTeacherRow && !$isTeacherConfirmed;
 
 // --- Handle request to become a teacher ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
@@ -289,7 +312,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 
 
 <div class="ms-md-auto d-flex flex-wrap gap-2 align-items-center profile-actions">
-    <?php if (!$hasTeacherRequest): ?>
+    <?php if ($isTeacherConfirmed): ?>
+        <!-- Confirmed teacher -->
+        <button class="btn btn-success btn-sm d-flex align-items-center gap-1" disabled>
+            <i class="bi bi-mortarboard-fill"></i>
+            <span>Teacher</span>
+        </button>
+
+    <?php elseif (!$hasTeacherRow): ?>
+        <!-- No request yet -->
         <form method="post" class="m-0">
             <button type="submit"
                     name="request_teacher"
@@ -298,7 +329,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
                 <span>Become a teacher</span>
             </button>
         </form>
+
     <?php else: ?>
+        <!-- Request sent, still pending -->
         <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" disabled>
             <i class="bi bi-hourglass-split"></i>
             <span>Teacher request pending</span>
@@ -311,6 +344,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
         <span>Logout</span>
     </a>
 </div>
+
 
 
 
