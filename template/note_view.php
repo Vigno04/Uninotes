@@ -141,7 +141,7 @@ if ($id !== null && is_numeric($id)) {
                     mysqli_stmt_close($stmt);
 
                     // score: +1 for up, -1 for down
-                    $delta = ($newValue === 1) ? 1 : -1;
+                    // $delta = ($newValue === 1) ? 1 : -1; // Removed: triggers handle this
 
                 } elseif ($oldValue === $newValue) {
                     // Same vote clicked again → undo
@@ -151,7 +151,7 @@ if ($id !== null && is_numeric($id)) {
                     mysqli_stmt_close($stmt);
 
                     // undo previous value
-                    $delta = ($oldValue === 1) ? -1 : 1;
+                    // $delta = ($oldValue === 1) ? -1 : 1; // Removed: triggers handle this
 
                 } else {
                     // Switch up <-> down
@@ -164,20 +164,22 @@ if ($id !== null && is_numeric($id)) {
                     mysqli_stmt_close($stmt);
 
                     // up(1)->down(0): -2, down(0)->up(1): +2
-                    $delta = ($newValue === 1) ? 2 : -2;
+                    // $delta = ($newValue === 1) ? 2 : -2; // Removed: triggers handle this
                 }
 
-                if ($delta !== 0) {
-                    $stmt = mysqli_prepare(
-                        $conn,
-                        "UPDATE note SET vote_count = vote_count + ? WHERE id = ?"
-                    );
-                    mysqli_stmt_bind_param($stmt, "ii", $delta, $noteId);
-                    mysqli_stmt_execute($stmt);
-                    mysqli_stmt_close($stmt);
-                }
+                // Removed manual vote_count update: triggers handle this automatically
+                // if ($delta !== 0) {
+                //     $stmt = mysqli_prepare(
+                //         $conn,
+                //         "UPDATE note SET vote_count = vote_count + ? WHERE id = ?"
+                //     );
+                //     mysqli_stmt_bind_param($stmt, "ii", $delta, $noteId);
+                //     mysqli_stmt_execute($stmt);
+                //     mysqli_stmt_close($stmt);
+                // }
 
-                header("Location: " . $_SERVER['REQUEST_URI']);
+                $redirectAnchor = strtok($_SERVER['REQUEST_URI'], '#') . '#note-vote';
+                header("Location: " . $redirectAnchor);
                 exit;
             }
         }
@@ -214,40 +216,51 @@ if ($id !== null && is_numeric($id)) {
 <div class="container mt-5">
     <h1 class="mb-2"><?php echo htmlspecialchars($note['title'] ?? 'Nota'); ?></h1>
 
-    <?php if (isset($_SESSION['person_id'])): ?>
-        <form method="post" class="d-inline-flex align-items-center gap-2 mb-5">
-            <button
-                type="submit"
-                name="vote"
-                value="up"
-                class="btn btn-sm <?php echo ($currentUserVote === 1) ? 'btn-success' : 'btn-outline-secondary'; ?>"
-            >
-                ⬆
-            </button>
-
-            <span class="fw-semibold">
-                <?php echo $noteScore; ?>
-            </span>
-
-            <button
-                type="submit"
-                name="vote"
-                value="down"
-                class="btn btn-sm <?php echo ($currentUserVote === -1) ? 'btn-danger' : 'btn-outline-secondary'; ?>"
-            >
-                ⬇
-            </button>
-        </form>
-    <?php else: ?>
-        <p class="text-muted mb-5">Log in to vote on this note.</p>
-    <?php endif; ?>
-
     <div class="row">
         <!-- Note Content Column -->
         <div class="col-12 col-lg-8 mb-4">
-            <div class="card">
-                <div class="card-body">
+            <div class="card note-card">
+                <div class="card-body" style="position:relative;">
                     <div class="markdown-body"><?php echo $htmlContent; ?></div>
+
+                    <!-- Voting buttons at the bottom-right, Reddit-style -->
+                    <?php if (isset($_SESSION['person_id'])): ?>
+                        <div id="note-vote" class="note-vote-fab">
+                            <form method="post" class="d-inline">
+                                <button
+                                    type="submit"
+                                    name="vote"
+                                    value="up"
+                                    class="btn btn-sm <?php echo ($currentUserVote === 1) ? 'btn-success' : 'btn-outline-secondary'; ?>"
+                                    aria-pressed="<?php echo ($currentUserVote === 1) ? 'true' : 'false'; ?>"
+                                    title="Upvote"
+                                >
+                                    ▲
+                                </button>
+                            </form>
+
+                            <div class="mx-2 align-self-center fw-bold note-score">
+                                <?php echo $noteScore; ?>
+                            </div>
+
+                            <form method="post" class="d-inline">
+                                <button
+                                    type="submit"
+                                    name="vote"
+                                    value="down"
+                                    class="btn btn-sm <?php echo ($currentUserVote === -1) ? 'btn-danger' : 'btn-outline-secondary'; ?>"
+                                    aria-pressed="<?php echo ($currentUserVote === -1) ? 'true' : 'false'; ?>"
+                                    title="Downvote"
+                                >
+                                    ▼
+                                </button>
+                            </form>
+                        </div>
+                    <?php else: ?>
+                        <div id="note-vote" class="note-vote-fab">
+                            <p class="text-muted mb-0 small">Log in to vote</p>
+                        </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
@@ -358,5 +371,27 @@ if ($id !== null && is_numeric($id)) {
         max-height: none;
         overflow-y: visible;
     }
+}
+</style>
+
+<style>
+/* Voting FAB placed bottom-right inside the note card */
+.note-card { position: relative; }
+.note-vote-fab {
+    position: absolute;
+    right: 1rem;
+    bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    background: rgba(255,255,255,0.0);
+}
+.note-vote-fab .btn { padding: .25rem .5rem; font-size: 1rem; }
+.note-score { font-size: 1rem; }
+
+/* On small screens keep it inline below content (avoid overlapping) */
+@media (max-width: 767.98px) {
+    .note-vote-fab { position: static; margin-top: 1rem; justify-content: flex-end; }
+    .note-card .card-body { padding-bottom: 3.5rem; }
 }
 </style>
