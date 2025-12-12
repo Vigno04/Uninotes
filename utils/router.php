@@ -10,6 +10,10 @@ class Router
             'file'=> 'courses.php',
             'title'=> 'Courses - Uninotes',
         ],
+        'course_offerings'=> [
+            'file'=> 'course_offerings.php',
+            'title'=> 'Course Offerings - Uninotes',
+        ],
         'account' => [
             'file'  => 'account.php',
             'title' => 'Profile - Uninotes',
