@@ -159,7 +159,8 @@ if ($stmtT) {
                         <input type="hidden" name="page" value="manage_users">
                         <div class="row g-2 align-items-center">
                             <div class="col-sm-8 col-md-6">
-                                <input type="text"
+                                <label for="manage-users-search" class="visually-hidden">Search users</label>
+                                <input id="manage-users-search" type="text"
                                        name="q"
                                        value="<?php echo htmlspecialchars($search); ?>"
                                        class="form-control"

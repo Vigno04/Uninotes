@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isTeacher) {
     <h1 class="h4">Become a Teacher</h1>
 
     <?php if ($isTeacher): ?>
-        <div class="alert alert-success">You are already a teacher or your request is pending!</div>
+        <div class="alert alert-success" role="alert" aria-live="polite">You are already a teacher or your request is pending!</div>
     <?php else: ?>
         <form method="post">
             <button class="btn btn-primary">Request Teacher Status</button>

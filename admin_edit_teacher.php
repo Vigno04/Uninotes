@@ -118,41 +118,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
 
                     <?php if ($successMessage): ?>
-                        <div class="alert alert-success"><?php echo htmlspecialchars($successMessage); ?></div>
+                        <div class="alert alert-success" role="status"><?php echo htmlspecialchars($successMessage); ?></div>
                     <?php endif; ?>
 
                     <?php if ($errorMessage): ?>
-                        <div class="alert alert-danger"><?php echo htmlspecialchars($errorMessage); ?></div>
+                        <div class="alert alert-danger" role="alert"><?php echo htmlspecialchars($errorMessage); ?></div>
                     <?php endif; ?>
 
                     <form method="post">
                         <div class="mb-3">
-                            <label class="form-label">Department</label>
-                            <input type="text"
+                            <label for="edit-department" class="form-label">Department</label>
+                            <input id="edit-department" type="text"
                                    name="department"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars($user['department'] ?? ''); ?>">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">University website (Unibo)</label>
-                            <input type="url"
+                            <label for="edit-unibo" class="form-label">University website (Unibo)</label>
+                            <input id="edit-unibo" type="url"
                                    name="unibo_site"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars($user['unibo_site'] ?? ''); ?>">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Phone number</label>
-                            <input type="text"
+                            <label for="edit-phone" class="form-label">Phone number</label>
+                            <input id="edit-phone" type="text"
                                    name="phone_number"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars($user['phone_number'] ?? ''); ?>">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label">Personal website</label>
-                            <input type="url"
+                            <label for="edit-personal" class="form-label">Personal website</label>
+                            <input id="edit-personal" type="url"
                                    name="personal_site"
                                    class="form-control"
                                    value="<?php echo htmlspecialchars($user['personal_site'] ?? ''); ?>">

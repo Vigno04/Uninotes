@@ -240,7 +240,7 @@ function findProgrammeName($programmes, $id) {
 
                     <!-- Alert messages -->
                     <?php if (!empty($errors)): ?>
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger" role="alert">
                             <ul class="mb-0">
                                 <?php foreach ($errors as $e): ?>
                                     <li><?php echo htmlspecialchars($e); ?></li>
@@ -250,7 +250,7 @@ function findProgrammeName($programmes, $id) {
                     <?php endif; ?>
 
                     <?php if ($success): ?>
-                        <div class="alert alert-success">
+                        <div class="alert alert-success" role="status">
                             <?php echo htmlspecialchars($success); ?>
                         </div>
                     <?php endif; ?>
@@ -261,13 +261,13 @@ function findProgrammeName($programmes, $id) {
                             <input type="hidden" name="action" value="create_course">
 
                             <div class="mb-3">
-                                <label class="form-label">Course name *</label>
-                                <input type="text" name="name" class="form-control" required>
+                                <label for="course-name" class="form-label">Course name *</label>
+                                <input id="course-name" type="text" name="name" class="form-control" required aria-required="true">
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Programme (optional)</label>
-                                <select name="programme_id" class="form-select">
+                                <label for="course-programme" class="form-label">Programme (optional)</label>
+                                <select id="course-programme" name="programme_id" class="form-select">
                                     <option value="">None</option>
                                     <?php foreach ($programmes as $p): ?>
                                         <option value="<?php echo (int)$p['id']; ?>">
@@ -278,8 +278,8 @@ function findProgrammeName($programmes, $id) {
                             </div>
 
                             <div class="mb-3">
-                                <label class="form-label">Description</label>
-                                <textarea name="description" class="form-control" rows="3"></textarea>
+                                <label for="course-description" class="form-label">Description</label>
+                                <textarea id="course-description" name="description" class="form-control" rows="3"></textarea>
                             </div>
 
                             <button type="submit" class="btn btn-primary">
@@ -323,14 +323,14 @@ function findProgrammeName($programmes, $id) {
                             <input type="hidden" name="course_id" value="<?php echo (int)$courseId; ?>">
 
                             <div class="col-6 col-md-3">
-                                <label class="form-label">Year</label>
-                                <input type="number" name="year" class="form-control"
+                                <label for="offering-year" class="form-label">Year</label>
+                                <input id="offering-year" type="number" name="year" class="form-control"
                                        value="<?php echo (int)date('Y'); ?>" min="2000" max="2100">
                             </div>
 
                             <div class="col-6 col-md-3">
-                                <label class="form-label">Semester</label>
-                                <select name="semester" class="form-select">
+                                <label for="offering-semester" class="form-label">Semester</label>
+                                <select id="offering-semester" name="semester" class="form-select">
                                     <option value="1">1</option>
                                     <option value="2">2</option>
                                 </select>
@@ -425,8 +425,8 @@ function findProgrammeName($programmes, $id) {
                                 <input type="hidden" name="course_id" value="<?php echo (int)$courseId; ?>">
 
                                 <div class="col-12 col-md-4">
-                                    <label class="form-label">Offering</label>
-                                    <select name="offering_id" class="form-select" required>
+                                    <label for="offering-id" class="form-label">Offering</label>
+                                    <select id="offering-id" name="offering_id" class="form-select" required>
                                         <option value="">Select offering…</option>
                                         <?php foreach ($offerings as $off): ?>
                                             <option value="<?php echo (int)$off['id']; ?>">
@@ -440,8 +440,8 @@ function findProgrammeName($programmes, $id) {
                                 </div>
 
                                 <div class="col-12 col-md-4">
-                                    <label class="form-label">Teacher</label>
-                                    <select name="teacher_id" class="form-select" required>
+                                    <label for="teacher-select" class="form-label">Teacher</label>
+                                    <select id="teacher-select" name="teacher_id" class="form-select" required>
                                         <option value="">Select teacher…</option>
                                         <?php foreach ($teachers as $t): ?>
                                             <option value="<?php echo (int)$t['person_id']; ?>">

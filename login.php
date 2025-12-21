@@ -11,7 +11,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del met
 
     // Validazione campi vuoti
     if ($email === '' || $password === '') {
-        $message = '<div class="alert alert-danger">Inserisci email e password.</div>';
+        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci email e password.</div>';
     } else {
         // Preparazione della query
         // Cerco la persona per email e recupero anche i dati da user
@@ -68,7 +68,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del met
             exit();
         } else {
             // Se qualcosa va storto
-            $message = '<div class="alert alert-danger">Wrong email or password.</div>';
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Wrong email or password.</div>';
         }
     }
 }
@@ -84,6 +84,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del met
     <link rel="icon" href="assets/favicon.ico" type="image/x-icon">
 </head>
 <body class="auth-page">
+    <a class="skip-link sr-only-focusable" href="#maincontent">Skip to content</a>
+    <main id="maincontent" role="main" tabindex="-1">
     <div class="auth-card-wrapper px-3 px-sm-0">
         <div class="auth-card mx-auto">
             <div class="text-center mb-4">
@@ -101,25 +103,25 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del met
             <?= $message ?>
             <form action="" method="POST" class="mb-3"> <!-- TODO: Forse si deve aggiungere un'action, magari authenticate.php -->
                 <div class="mb-3">
-                    <label class="form-label small mb-1">Email</label>
-                    <input type="email" name="email" class="form-control" placeholder="student@university.edu" required autofocus>
+                    <label for="login-email" class="form-label small mb-1">Email</label>
+                    <input id="login-email" type="email" name="email" class="form-control" placeholder="student@university.edu" required autofocus aria-describedby="serverMessage">
                 </div>
 
                 <div class="mb-2">
-                    <label class="form-label small mb-1">Password</label>
-                    <input type="password" name="password" class="form-control" placeholder="●●●●●●●●" required>
+                    <label for="login-password" class="form-label small mb-1">Password</label>
+                    <input id="login-password" type="password" name="password" class="form-control" placeholder="●●●●●●●●" required aria-describedby="serverMessage">
                 </div>
 
 
                 <div class="d-flex justify-content-end mb-3">
-                    <a href="#" class="auth-muted-link text-decoration-none">Forgot password?</a>
+                    <button type="button" class="btn btn-link p-0 auth-muted-link text-decoration-none" aria-label="Reset your password">Forgot password?</button>
                 </div>
 
                 <button type="submit" class="btn btn-primary auth-submit w-100">Sign In</button>
             </form>
 
             <div class="auth-divider"><span>or</span></div>
-            <a href="register.php" class="btn btn-outline-primary auth-secondary w-100 mb-1" role="button">
+            <a href="register.php" class="btn btn-outline-primary auth-secondary w-100 mb-1">
                 Create New Account
             </a>
             <p class="auth-footer-text text-center mb-0 mt-3">
@@ -128,6 +130,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {                // Controllo del met
 
         </div>
     </div>
+    </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <!-- Da aggiungere un altro scriptino... una funzione js -->

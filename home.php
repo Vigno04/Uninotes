@@ -291,7 +291,9 @@ if ($resultCourses) {
             <input type="hidden" name="limit" value="<?php echo (int)$limit; ?>">
 
             <div class="col-12 col-lg-6">
+                <label for="home-search" class="visually-hidden">Search notes</label>
                 <input
+                    id="home-search"
                     type="text"
                     class="form-control"
                     name="q"
@@ -301,7 +303,8 @@ if ($resultCourses) {
             </div>
 
             <div class="col-6 col-lg-2">
-                <select name="offering_id" class="form-select">
+                <label for="offering-select" class="visually-hidden">Filter by offering</label>
+                <select id="offering-select" name="offering_id" class="form-select">
                     <option value="">All notes</option>
 
                     <?php if ($currentUserId !== null): ?>
@@ -322,7 +325,8 @@ if ($resultCourses) {
 
 
             <div class="col-6 col-lg-2">
-                <select name="sort" class="form-select">
+                <label for="sort-select" class="visually-hidden">Sort results</label>
+                <select id="sort-select" name="sort" class="form-select">
                     <option value="date" <?php echo $sort === 'date' ? 'selected' : ''; ?>>
                         Most recent
                     </option>

@@ -138,7 +138,7 @@ if ($stmtF) {
         </p>
 
         <?php if (empty($offerings)): ?>
-            <div class="alert alert-info">
+            <div class="alert alert-info" role="status" aria-live="polite">
                 No course offerings available for this course yet.
             </div>
         <?php else: ?>

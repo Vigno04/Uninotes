@@ -12,11 +12,11 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     // Basic validation
     if ($name === "" || $surname === "" || $email === "" || $pass1 === "" || $pass2 === "") {
-        $message = '<div class="alert alert-danger">Compila tutti i campi.</div>';
+        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Compila tutti i campi.</div>';
     } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $message = '<div class="alert alert-danger">Inserisci una email valida.</div>';
+        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci una email valida.</div>';
     } elseif ($pass1 !== $pass2) {
-        $message = '<div class="alert alert-danger">Le password non coincidono.</div>';
+        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Le password non coincidono.</div>';
     } else {
         // Check if email already exists
         $checkSql = "SELECT id FROM person WHERE email = ? LIMIT 1";
@@ -26,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         $checkResult = mysqli_stmt_get_result($checkStmt);
 
         if (mysqli_fetch_assoc($checkResult)) {
-            $message = '<div class="alert alert-danger">Esiste già un account con questa email.</div>';
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Esiste già un account con questa email.</div>';
         } else {
             // Insert into person
             $insertPersonSql = "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)";
@@ -34,7 +34,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
             mysqli_stmt_bind_param($personStmt, "sss", $name, $surname, $email);
 
             if (!mysqli_stmt_execute($personStmt)) {
-                $message = '<div class="alert alert-danger">Errore durante la registrazione (person).</div>';
+                $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Errore durante la registrazione (person).</div>';
             } else {
                 $personId = mysqli_insert_id($conn);
 
@@ -48,7 +48,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                 mysqli_stmt_bind_param($userStmt, "iss", $personId, $plainPassword, $role);
 
                 if (!mysqli_stmt_execute($userStmt)) {
-                    $message = '<div class="alert alert-danger">Errore durante la registrazione (user).</div>';
+                    $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Errore durante la registrazione (user).</div>';
                 } else {
                     // Auto-login after registration (optional)
                     $_SESSION["person_id"] = $personId;
@@ -79,6 +79,9 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 </head>
 <body class="auth-page">
 
+    <a class="skip-link sr-only-focusable" href="#maincontent">Skip to content</a>
+    <main id="maincontent" role="main" tabindex="-1">
+
 <div class="auth-card-wrapper px-3 px-sm-0">
     <div class="auth-card mx-auto">
 
@@ -104,48 +107,48 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </div>
 
         <!-- Server messages -->
-        <?php if (!empty($message)) echo $message; ?>
+        <?php if (!empty($message)) { echo $message; } ?>
 
         <!-- Register form -->
         <form action="" method="POST" class="mb-3">
 
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label small mb-1">Name</label>
-                    <input type="text" name="name" class="form-control" required>
+                    <label for="reg-name" class="form-label small mb-1">Name</label>
+                    <input id="reg-name" type="text" name="name" class="form-control" required>
                 </div>
 
                 <div class="col-md-6">
-                    <label class="form-label small mb-1">Surname</label>
-                    <input type="text" name="surname" class="form-control" required>
+                    <label for="reg-surname" class="form-label small mb-1">Surname</label>
+                    <input id="reg-surname" type="text" name="surname" class="form-control" required>
                 </div>
             </div>
 
             <div class="mt-3 mb-3">
-                <label class="form-label small mb-1">Email</label>
-                <input type="email"
+                <label for="reg-email" class="form-label small mb-1">Email</label>
+                <input id="reg-email" type="email"
                        name="email"
                        class="form-control"
                        placeholder="student@university.edu"
-                       required>
+                       required aria-describedby="serverMessage">
             </div>
 
             <div class="mb-3">
-                <label class="form-label small mb-1">Password</label>
-                <input type="password"
+                <label for="reg-password" class="form-label small mb-1">Password</label>
+                <input id="reg-password" type="password"
                        name="password"
                        class="form-control"
                        placeholder="●●●●●●●●"
-                       required>
+                       required aria-describedby="serverMessage">
             </div>
 
             <div class="mb-4">
-                <label class="form-label small mb-1">Confirm password</label>
-                <input type="password"
+                <label for="reg-password-confirm" class="form-label small mb-1">Confirm password</label>
+                <input id="reg-password-confirm" type="password"
                        name="password_confirm"
                        class="form-control"
                        placeholder="●●●●●●●●"
-                       required>
+                       required aria-describedby="serverMessage">
             </div>
 
             <button type="submit" class="btn btn-primary auth-submit w-100">
@@ -156,8 +159,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         <div class="auth-divider"><span>or</span></div>
 
         <a href="login.php"
-           class="btn btn-outline-primary auth-secondary w-100 mb-1"
-           role="button">
+           class="btn btn-outline-primary auth-secondary w-100 mb-1">
             Already have an account? Sign in
         </a>
 
@@ -166,6 +168,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
         </p>
     </div>
 </div>
+</main>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

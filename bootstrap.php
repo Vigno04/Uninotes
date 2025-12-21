@@ -12,9 +12,6 @@ if ($conn === false) {
     die("Connection error: " . mysqli_connect_error());
 }
 
-// opzionale ma consigliato: charset UTF-8
 mysqli_set_charset($conn, "utf8mb4");
-
-// opzionale: costante per la cartella upload
 define("UPLOAD_DIR", "./uploads/");
 ?>

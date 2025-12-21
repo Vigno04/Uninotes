@@ -1,10 +1,97 @@
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    color: #0f172a; /* dark text for readability */
+}
+
 body.auth-page {
     min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     background: linear-gradient(180deg, #eef3ff 0%, #f5f7ff 40%, #e6f0ff 100%);
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+:root {
+    --brand-500: #2563eb; /* blue */
+    --brand-600: #4f46e5; /* indigo */
+    --muted-500: #374151; /* darker muted text for contrast */
+    --muted-600: #111827; /* near-black for high contrast */
+    --focus-ring: 3px solid rgba(37, 99, 235, 0.4);
+} 
+
+/* Skip link (visually hidden but visible on keyboard focus) */
+.skip-link {
+    position: absolute;
+    left: -999px;
+    top: auto;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+}
+.skip-link:focus,
+.sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    padding: .5rem .75rem;
+    margin: .5rem;
+    background: #000;
+    color: #fff;
+    border-radius: .25rem;
+    z-index: 1000;
+}
+
+/* Accessible focus styles */
+:focus {
+    outline: none;
+}
+:focus-visible,
+:focus {
+    outline: 3px solid var(--brand-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
+}
+
+button:focus,
+.btn:focus,
+.nav-link:focus,
+.form-control:focus {
+    outline: 3px solid var(--brand-500);
+    outline-offset: 2px;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.22);
+    border-color: var(--brand-500);
+}
+
+/* Ensure Bootstrap button-toggle (btn-check + label) shows focus */
+.btn-check:focus + label,
+.btn-check:active + label {
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.22);
+}
+
+/* When radio/checkbox is checked, emphasize label */
+.btn-check:checked + label {
+    background: linear-gradient(90deg, var(--brand-500), var(--brand-600));
+    color: #fff;
+}
+
+/* Improve contrast of outline buttons when used as secondary actions */
+.btn-outline-primary.auth-secondary {
+    border-color: var(--brand-500);
+    color: var(--brand-500);
+}
+.btn-outline-primary.auth-secondary:hover,
+.btn-outline-primary.auth-secondary:focus {
+    background: rgba(37, 99, 235, 0.04);
+}
+/* Slightly darker muted text for contrast */
+.auth-subheading,
+.auth-footer-text,
+.auth-muted-link,
+.small.text-muted {
+    color: var(--muted-600) !important;
 }
 
 .auth-card-wrapper {
