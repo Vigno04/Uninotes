@@ -1,36 +1,51 @@
 <?php
-require_once 'db.php';
+require_once __DIR__ . '/connection.php';
 
 class UserModel {
-    private PDO $pdo;
+    private mysqli $conn;
 
     public function __construct() {
-        $this->pdo = Database::getInstance();
+        $this->conn = db();
     }
 
     /**
      * Check if an email already exists in the database.
      */
     public function emailExists(string $email): bool {
-        $stmt = $this->pdo->prepare("SELECT id FROM person WHERE email = ? LIMIT 1");
-        $stmt->execute([$email]);
-        return $stmt->fetch() !== false;
+        $stmt = mysqli_prepare($this->conn, "SELECT id FROM person WHERE email = ? LIMIT 1");
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $exists = $res && (mysqli_fetch_assoc($res) !== null);
+        mysqli_stmt_close($stmt);
+        return $exists;
     }
 
     /**
      * Create a new user: insert into person and user tables.
      */
     public function createUser(string $name, string $surname, string $email, string $hashedPassword, string $role = 'user'): int {
-        // Insert into person
-        $stmt = $this->pdo->prepare("INSERT INTO person (name, surname, email) VALUES (?, ?, ?)");
-        $stmt->execute([$name, $surname, $email]);
-        $personId = (int)$this->pdo->lastInsertId();
+        mysqli_begin_transaction($this->conn);
+        try {
+            // Insert into person
+            $stmt = mysqli_prepare($this->conn, "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, "sss", $name, $surname, $email);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
+            $personId = (int)mysqli_insert_id($this->conn);
 
-        // Insert into user
-        $stmt = $this->pdo->prepare("INSERT INTO user (person_id, password, role) VALUES (?, ?, ?)");
-        $stmt->execute([$personId, $hashedPassword, $role]);
+            // Insert into user
+            $stmt = mysqli_prepare($this->conn, "INSERT INTO user (person_id, password, role) VALUES (?, ?, ?)");
+            mysqli_stmt_bind_param($stmt, "iss", $personId, $hashedPassword, $role);
+            mysqli_stmt_execute($stmt);
+            mysqli_stmt_close($stmt);
 
-        return $personId;
+            mysqli_commit($this->conn);
+            return $personId;
+        } catch (mysqli_sql_exception $e) {
+            mysqli_rollback($this->conn);
+            throw $e;
+        }
     }
 
     /**
@@ -39,7 +54,7 @@ class UserModel {
      * Handles legacy plaintext password migration.
      */
     public function authenticate(string $email, string $password): array|false {
-        $stmt = $this->pdo->prepare("
+        $sql = "
             SELECT 
                 p.id AS person_id,
                 p.name,
@@ -51,9 +66,14 @@ class UserModel {
             JOIN user u ON p.id = u.person_id
             WHERE p.email = ?
             LIMIT 1
-        ");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        ";
+
+        $stmt = mysqli_prepare($this->conn, $sql);
+        mysqli_stmt_bind_param($stmt, "s", $email);
+        mysqli_stmt_execute($stmt);
+        $res = mysqli_stmt_get_result($stmt);
+        $user = $res ? mysqli_fetch_assoc($res) : null;
+        mysqli_stmt_close($stmt);
 
         if (!$user) {
             return false;
@@ -61,13 +81,14 @@ class UserModel {
 
         // Check password
         if (password_verify($password, $user['password'])) {
-            // Hashed password matches
             return $user;
-        } elseif ($user['password'] === $password) {
-            // Legacy plaintext match: re-hash and update
+        }
+
+        // Legacy plaintext match: re-hash and update
+        if ($user['password'] === $password) {
             $newHash = password_hash($password, PASSWORD_DEFAULT);
-            $this->updatePassword($user['person_id'], $newHash);
-            $user['password'] = $newHash; // Update for return
+            $this->updatePassword((int)$user['person_id'], $newHash);
+            $user['password'] = $newHash;
             return $user;
         }
 
@@ -78,16 +99,22 @@ class UserModel {
      * Update the password for a user.
      */
     public function updatePassword(int $personId, string $hashedPassword): bool {
-        $stmt = $this->pdo->prepare("UPDATE user SET password = ? WHERE person_id = ?");
-        return $stmt->execute([$hashedPassword, $personId]);
+        $stmt = mysqli_prepare($this->conn, "UPDATE user SET password = ? WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "si", $hashedPassword, $personId);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
     }
 
     /**
      * Update the last_login timestamp for a user.
      */
     public function updateLastLogin(int $personId): bool {
-        $stmt = $this->pdo->prepare("UPDATE user SET last_login = NOW() WHERE person_id = ?");
-        return $stmt->execute([$personId]);
+        $stmt = mysqli_prepare($this->conn, "UPDATE user SET last_login = NOW() WHERE person_id = ?");
+        mysqli_stmt_bind_param($stmt, "i", $personId);
+        $ok = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+        return (bool)$ok;
     }
 }
 ?>

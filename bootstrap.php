@@ -1,20 +1,34 @@
 <?php
-session_start();
+// bootstrap.php
+declare(strict_types=1);
 
-// Connessione al database UniNotes
-$host = "localhost";
-$user = "root";
-$password = "";        // la tua password MySQL
-$dbname = "uninotes";  // nome del database dove hai importato lo schema
-
-$conn = mysqli_connect($host, $user, $password, $dbname);
-if ($conn === false) {
-    die("Connection error: " . mysqli_connect_error());
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 
-// opzionale ma consigliato: charset UTF-8
-mysqli_set_charset($conn, "utf8mb4");
+// --- DB CONFIG ---
+define('DB_HOST', 'localhost');
+define('DB_NAME', 'uninotes');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 
-// opzionale: costante per la cartella upload
-define("UPLOAD_DIR", "./uploads/");
-?>
+// --- SINGLETON CONNECTION (una sola connessione per request) ---
+function db(): mysqli {
+    static $conn = null;
+
+    if ($conn instanceof mysqli) {
+        return $conn;
+    }
+
+    $conn = mysqli_connect(DB_HOST, DB_USER, DB_PASS, DB_NAME);
+
+    if (!$conn) {
+        die("DB connection error: " . mysqli_connect_error());
+    }
+
+    mysqli_set_charset($conn, "utf8mb4");
+    return $conn;
+}
+
+// Se vuoi usare sempre $conn come variabile già pronta:
+$conn = db();

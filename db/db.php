@@ -1,22 +1,19 @@
 <?php
-class Database {
-    private static $instance = null;
+// db/db.php
+// Compatibilità: manteniamo la classe Database ma senza creare un'altra connessione.
 
+declare(strict_types=1);
+
+require_once __DIR__ . '/connection.php';
+
+final class Database {
     private function __construct() {}
 
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new PDO(
-                "mysql:host=localhost;dbname=uninotes;charset=utf8mb4",
-                "root",
-                "",
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-                ]
-            );
-        }
-        return self::$instance;
+    /**
+     * Restituisce la connessione mysqli singleton.
+     */
+    public static function getInstance(): mysqli {
+        return db();
     }
 }
 ?>
