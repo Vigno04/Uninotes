@@ -44,9 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
 
             $allowed = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
             if (!isset($allowed[$mime])) {
-                $updateMessage = '<div class="alert alert-danger mb-3">File type not allowed. Use JPG/PNG/WEBP.</div>';
+                $updateMessage = '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">File type not allowed. Use JPG/PNG/WEBP.</div>';
             } elseif ($file['size'] > $maxSize) {
-                $updateMessage = '<div class="alert alert-danger mb-3">File too large. Max 2MB.</div>';
+                $updateMessage = '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">File too large. Max 2MB.</div>';
             } else {
                 $ext = $allowed[$mime];
                 $newName = 'profile_' . $personId . '_' . time() . '.' . $ext;
@@ -63,11 +63,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
                     // imposta la variabile per il preview locale con bust di cache
                     $profilePicture = $dbPath . '?v=' . time();
                 } else {
-                    $updateMessage = '<div class="alert alert-danger mb-3">Errore nel salvataggio del file.</div>';
+                    $updateMessage = '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">Errore nel salvataggio del file.</div>';
                 }
             }
         } else {
-            $updateMessage = '<div class="alert alert-danger mb-3">Errore upload file (code '.$file['error'].').</div>';
+            $updateMessage = '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">Errore upload file (code '.$file['error'].').</div>';
         }
     }
 
@@ -77,9 +77,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
     mysqli_stmt_bind_param($updateStmt, "ssi", $programme, $bio, $personId);
 
     if (mysqli_stmt_execute($updateStmt)) {
-        $updateMessage = ($updateMessage ?? '') . '<div class="alert alert-success mb-3">Profile updated successfully.</div>';
+        $updateMessage = ($updateMessage ?? '') . '<div id="serverMessage" class="alert alert-success mb-3" role="status" aria-live="polite">Profile updated successfully.</div>';
     } else {
-        $updateMessage = ($updateMessage ?? '') . '<div class="alert alert-danger mb-3">Error while updating profile.</div>';
+        $updateMessage = ($updateMessage ?? '') . '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">Error while updating profile.</div>';
     }
 
     mysqli_stmt_close($updateStmt);
@@ -206,16 +206,39 @@ if ($mode === 'admin') {
 
 
 
-$userId = $_SESSION['person_id']; 
+$userId = (int)$_SESSION['person_id'];
 
-// Check if the user already has a teacher row
-$sql = "SELECT person_id FROM teacher WHERE person_id = ?";
+// Check teacher status (pending vs confirmed)
+$sql = "
+    SELECT department, unibo_site, phone_number, personal_site
+    FROM teacher
+    WHERE person_id = ?
+    LIMIT 1
+";
 $stmt = mysqli_prepare($conn, $sql);
 mysqli_stmt_bind_param($stmt, "i", $userId);
 mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$hasTeacherRequest = mysqli_fetch_assoc($res) ? true : false;
+$res   = mysqli_stmt_get_result($stmt);
+$row   = mysqli_fetch_assoc($res);
 mysqli_stmt_close($stmt);
+
+$hasTeacherRow      = (bool)$row;
+$isTeacherConfirmed = false; // default
+
+if ($hasTeacherRow) {
+    // pending if ALL these fields are NULL
+    $allNull = (
+        is_null($row['department']) &&
+        is_null($row['unibo_site']) &&
+        is_null($row['phone_number']) &&
+        is_null($row['personal_site'])
+    );
+
+    $isTeacherConfirmed = !$allNull;
+}
+
+// for convenience: “request exists but still pending”
+$hasTeacherRequest = $hasTeacherRow && !$isTeacherConfirmed;
 
 // --- Handle request to become a teacher ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
@@ -247,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 <div class="container py-4 py-lg-5">
     <div class="row justify-content-center">
         <div class="col-12 col-lg-10 col-xl-8">
-            <?php if (!empty($updateMessage)) echo $updateMessage; ?>
+            <?php if (!empty($updateMessage)) { echo $updateMessage; } ?>
             <!-- HEADER PROFILO (comune) -->
             <div class="card border-0 shadow-sm rounded-4 mb-4">
                 <div class="card-body d-flex flex-column flex-md-row align-items-md-center gap-3">
@@ -255,7 +278,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 
                         <?php if (!empty($profilePicture)): ?>
                             <img src="<?php echo htmlspecialchars($profilePicture); ?>"
-                                 alt="profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+                                 alt="Profile of <?php echo htmlspecialchars($fullName); ?>" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
                         <?php else: ?>
                             <div class="rounded-circle d-flex align-items-center justify-content-center"
                                  style="width:80px;height:80px;
@@ -289,7 +312,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 
 
 <div class="ms-md-auto d-flex flex-wrap gap-2 align-items-center profile-actions">
-    <?php if (!$hasTeacherRequest): ?>
+    <?php if ($isTeacherConfirmed): ?>
+        <!-- Confirmed teacher -->
+        <button class="btn btn-success btn-sm d-flex align-items-center gap-1" disabled>
+            <i class="bi bi-mortarboard-fill"></i>
+            <span>Teacher</span>
+        </button>
+
+    <?php elseif (!$hasTeacherRow): ?>
+        <!-- No request yet -->
         <form method="post" class="m-0">
             <button type="submit"
                     name="request_teacher"
@@ -298,7 +329,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
                 <span>Become a teacher</span>
             </button>
         </form>
+
     <?php else: ?>
+        <!-- Request sent, still pending -->
         <button class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" disabled>
             <i class="bi bi-hourglass-split"></i>
             <span>Teacher request pending</span>
@@ -314,6 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 
 
 
+
                 </div>
             </div>
             <div class="card border-0 shadow-sm rounded-4 mb-4">
@@ -321,22 +355,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
                     <div class="d-flex justify-content-between align-items-center mb-4">
                     <div>
                         <h2 class="h5 mb-1">Personal Information</h2>
-                        <p class="text-muted small mb-0">Update your account details</p>
+                        <p class="text-muted small mb-0">View your account details — click "Edit profile" to modify.</p>
                     </div>
 
                     <button type="button"
                             id="editProfileBtn"
-                            class="btn btn-outline-secondary btn-sm">
+                            class="btn btn-outline-secondary btn-sm"
+                            aria-expanded="false"
+                            aria-controls="profileForm">
                         Edit profile
                     </button>
                 </div>
 
-                    <form id="profileForm" method="POST" enctype="multipart/form-data">
+                    <form id="profileForm" class="d-none" aria-hidden="true" method="POST" enctype="multipart/form-data">
                         <div class="mb-3">
-                            <label class="form-label small text-muted">Profile picture</label>
+                            <label for="profilePictureInput" class="form-label small text-muted">Profile picture</label>
                             <div class="d-flex align-items-center gap-3 mb-2">
                                 <img id="profilePreview" src="<?php echo htmlspecialchars($previewSrc); ?>"
-                                     alt="profile" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
+                                     alt="Profile preview of <?php echo htmlspecialchars($fullName); ?>" style="width:80px;height:80px;border-radius:50%;object-fit:cover;">
                                 <div>
                                     <input type="file" class="form-control" name="profile_picture" id="profilePictureInput" accept="image/*" disabled>
                                     <div class="small text-muted">JPG, PNG, WEBP - max 2MB</div>
@@ -344,53 +380,57 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small text-muted">First Name</label>
-                            <input type="text"
+                            <label for="profile-name" class="form-label small text-muted">First Name</label>
+                            <input id="profile-name" type="text"
                                     class="form-control"
                                     name="name"
                                     value="<?php echo htmlspecialchars($name); ?>"
                                     disabled
+                                    aria-readonly="true"
                                     data-lock="true">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small text-muted">Last Name</label>
-                            <input type="text"
+                            <label for="profile-surname" class="form-label small text-muted">Last Name</label>
+                            <input id="profile-surname" type="text"
                                     class="form-control"
                                     name="surname"
                                     value="<?php echo htmlspecialchars($surname); ?>"
                                     disabled
+                                    aria-readonly="true"
                                     data-lock="true">
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label small text-muted">Email</label>
+                            <label for="profile-email" class="form-label small text-muted">Email</label>
                             <div class="input-group">
                                 <span class="input-group-text">📧</span>
-                                <input type="email"
+                                <input id="profile-email" type="email"
                                         class="form-control"
                                         name="email"
                                         value="<?php echo htmlspecialchars($email); ?>"
                                         disabled
+                                        aria-readonly="true"
                                         data-lock="true">
                             </div>
                         </div>
 
                         <div class="mb-3">
-                            <label class="form-label small text-muted">Study Programme</label>
-                            <input type="text"
+                            <label for="profile-programme" class="form-label small text-muted">Study Programme</label>
+                            <input id="profile-programme" type="text"
                                     class="form-control"
                                     name="programme"
                                     value="<?php echo htmlspecialchars($programme); ?>"
-                                    disabled>
+                                    disabled
+                                    aria-readonly="true">
                         </div>
 
                         <div class="mb-4">
-                            <label class="form-label small text-muted">Bio</label>
-                            <textarea class="form-control" 
+                            <label for="profile-bio" class="form-label small text-muted">Bio</label>
+                            <textarea id="profile-bio" class="form-control" 
                                 rows="3" 
                                 cols="1" 
                                 name="bio"
-                                disabled><?php echo htmlspecialchars($bio); ?></textarea>
+                                disabled aria-readonly="true"><?php echo htmlspecialchars($bio); ?></textarea>
                         </div>
 
                         <button type="submit"
@@ -451,6 +491,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 </div>
 
 <script>
+// Accessibility: show/hide the edit form, move focus appropriately, and restore values on cancel
 document.addEventListener('DOMContentLoaded', function () {
     const editBtn = document.getElementById('editProfileBtn');
     const form    = document.getElementById('profileForm');
@@ -463,28 +504,93 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
     }
 
-    const fields = form.querySelectorAll('input, textarea');
+    // track fields and initial values for reset
+    const fields = Array.from(form.querySelectorAll('input, textarea'));
+    const initial = {};
+    fields.forEach(function (el) {
+        initial[el.id || el.name] = {
+            value: el.value,
+            disabled: el.disabled
+        };
+    });
+    const initialPreview = preview ? preview.src : null;
+
     let editing = false;
 
-    editBtn.addEventListener('click', function () {
-        editing = !editing;
+    function showForm() {
+        form.classList.remove('d-none');
+        form.removeAttribute('aria-hidden');
+        editBtn.setAttribute('aria-expanded', 'true');
 
         fields.forEach(function (el) {
-            if (el.dataset.lock === 'true') return;
-            el.disabled = !editing;
+            if (el.dataset.lock === 'true') return; // these remain readonly
+            el.disabled = false;
         });
+        if (fileInput) fileInput.disabled = false;
+        saveBtn.disabled = false;
 
-        // abilita/disabilita campo file separatamente (fileInput non ha data-lock)
-        if (fileInput) fileInput.disabled = !editing;
+        // focus the first editable control
+        const first = fields.find(f => !f.disabled);
+        if (first) {
+            first.focus();
+        } else if (fileInput) {
+            fileInput.focus();
+        }
 
-        saveBtn.disabled = !editing;
-        editBtn.textContent = editing ? 'Cancel' : 'Edit profile';
+        editBtn.textContent = 'Cancel';
+        editing = true;
 
-        if (!editing) {
-            window.location.reload();
+        // close on Escape
+        document.addEventListener('keydown', escHandler);
+    }
+
+    function hideForm(restore = true) {
+        // restore values if requested
+        if (restore) {
+            fields.forEach(function (el) {
+                const key = el.id || el.name;
+                if (initial[key]) el.value = initial[key].value;
+            });
+            if (preview && initialPreview !== null) preview.src = initialPreview;
+            if (fileInput) fileInput.value = '';
+        }
+
+        fields.forEach(function (el) {
+            el.disabled = true;
+        });
+        if (fileInput) fileInput.disabled = true;
+        saveBtn.disabled = true;
+
+        form.classList.add('d-none');
+        form.setAttribute('aria-hidden', 'true');
+        editBtn.setAttribute('aria-expanded', 'false');
+        editBtn.textContent = 'Edit profile';
+        editing = false;
+
+        editBtn.focus();
+        document.removeEventListener('keydown', escHandler);
+    }
+
+    function escHandler(e) {
+        if (e.key === 'Escape' || e.key === 'Esc') {
+            hideForm(true);
+        }
+    }
+
+    // Initial state: keep form hidden (server-side already sets this), ensure fields are disabled
+    fields.forEach(function (el) { el.disabled = true; });
+    if (fileInput) fileInput.disabled = true;
+    saveBtn.disabled = true;
+
+    editBtn.addEventListener('click', function () {
+        if (editing) {
+            hideForm(true);
+        } else {
+            showForm();
         }
     });
 
+    // Preview image on file change
     if (fileInput && preview) {
         fileInput.addEventListener('change', function (e) {
             const f = fileInput.files[0];
@@ -493,6 +599,7 @@ document.addEventListener('DOMContentLoaded', function () {
             preview.src = url;
         });
     }
+
 });
 </script>
 

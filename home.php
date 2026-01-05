@@ -12,66 +12,6 @@ $isAdmin      = (isset($_SESSION['role']) && $_SESSION['role'] === 'admin');
 $currentUserId = $_SESSION['person_id'] ?? null;
 
 
-// 0) Gestione POST: aggiungi / rimuovi corso (follow / unfollow)
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && $currentUserId !== null) {
-    $courseId = isset($_POST['course_id']) ? (int)$_POST['course_id'] : 0;
-
-    if ($courseId > 0) {
-        if (isset($_POST['follow_course'])) {
-            // FOLLOW → prendo l'offerta più recente (anno + semestre) per quel course_id
-            $sqlOffering = "
-                SELECT id
-                FROM course_offering
-                WHERE course_id = ?
-                ORDER BY year DESC, semester DESC
-                LIMIT 1
-            ";
-            $stmtOff = mysqli_prepare($conn, $sqlOffering);
-            if ($stmtOff) {
-                mysqli_stmt_bind_param($stmtOff, "i", $courseId);
-                mysqli_stmt_execute($stmtOff);
-                $resOff = mysqli_stmt_get_result($stmtOff);
-                if ($rowOff = mysqli_fetch_assoc($resOff)) {
-                    $offeringId = (int)$rowOff['id'];
-
-                    // inserisco nella tabella di follow (se non esiste già)
-                    $sqlFollow = "
-                        INSERT IGNORE INTO course_offering_follow (offering_id, user_id)
-                        VALUES (?, ?)
-                    ";
-                    $stmtFollow = mysqli_prepare($conn, $sqlFollow);
-                    if ($stmtFollow) {
-                        mysqli_stmt_bind_param($stmtFollow, "ii", $offeringId, $currentUserId);
-                        mysqli_stmt_execute($stmtFollow);
-                        mysqli_stmt_close($stmtFollow);
-                    }
-                }
-                mysqli_stmt_close($stmtOff);
-            }
-        } elseif (isset($_POST['unfollow_course'])) {
-            // UNFOLLOW → rimuovo tutti i follow per quel course_id (tutte le offering di quel corso)
-            $sqlUnfollow = "
-                DELETE cof
-                FROM course_offering_follow cof
-                JOIN course_offering co ON cof.offering_id = co.id
-                WHERE co.course_id = ? AND cof.user_id = ?
-            ";
-            $stmtUnf = mysqli_prepare($conn, $sqlUnfollow);
-            if ($stmtUnf) {
-                mysqli_stmt_bind_param($stmtUnf, "ii", $courseId, $currentUserId);
-                mysqli_stmt_execute($stmtUnf);
-                mysqli_stmt_close($stmtUnf);
-            }
-        }
-    }
-
-    // redirect per evitare il resubmit del form
-    header('Location: ' . strtok($_SERVER['REQUEST_URI'], '#'));
-    exit;
-}
-
-
-
 // -------------------------
 // 0) Parametri da $_GET
 // -------------------------
@@ -79,13 +19,13 @@ $searchTerm = trim($_GET['q'] ?? '');
 $sort       = $_GET['sort'] ?? 'date'; // 'date' o 'votes'
 
 $filterMyCourses = false;
-$courseFilter    = null;
+$offeringFilter  = null;
 
-if (isset($_GET['course_id']) && $_GET['course_id'] !== '') {
-    if ($_GET['course_id'] === 'my' && $currentUserId !== null) {
+if (isset($_GET['offering_id']) && $_GET['offering_id'] !== '') {
+    if ($_GET['offering_id'] === 'my' && $currentUserId !== null) {
         $filterMyCourses = true;
     } else {
-        $courseFilter = (int)$_GET['course_id'];
+        $offeringFilter = (int)$_GET['offering_id'];
     }
 }
 
@@ -95,43 +35,62 @@ $loadMoreStep = 5;
 $limit        = isset($_GET['limit']) ? max($defaultLimit, (int)$_GET['limit']) : $defaultLimit;
 
 // -------------------------
-// 1) Corsi disponibili per il filtro (dropdown)
+// Informazioni sull'offering specifico (se filtrato)
 // -------------------------
-$courseOptions = [];
-$sqlCourseOptions = "
-    SELECT id, name FROM course;
-";
-$resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
-if ($resultCourseOptions) {
-    while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
-        $courseOptions[] = $row;
+$offeringInfo = null;
+if (!is_null($offeringFilter)) {
+    $sqlOfferingInfo = "
+        SELECT 
+            c.name AS course_name,
+            co.year,
+            co.semester
+        FROM course_offering co
+        JOIN course c ON co.course_id = c.id
+        WHERE co.id = ?
+    ";
+    $stmtInfo = mysqli_prepare($conn, $sqlOfferingInfo);
+    if ($stmtInfo) {
+        mysqli_stmt_bind_param($stmtInfo, "i", $offeringFilter);
+        mysqli_stmt_execute($stmtInfo);
+        $resInfo = mysqli_stmt_get_result($stmtInfo);
+        $offeringInfo = mysqli_fetch_assoc($resInfo);
+        mysqli_stmt_close($stmtInfo);
     }
 }
 
 // -------------------------
-// 1b) Corsi già seguiti dall'utente (per disabilitare il bottone)
+// 1) Offering disponibili per filtro
 // -------------------------
-$followedCourseIds = [];
+$allOfferingOptions = [];
 
 if ($currentUserId !== null) {
-    $sqlFollowed = "
-        SELECT DISTINCT c.id AS course_id
+    // Offerings seguiti dall'utente
+    $sqlOfferings = "
+        SELECT 
+            co.id,
+            c.name AS course_name,
+            co.year,
+            co.semester
         FROM course_offering_follow cof
         JOIN course_offering co ON cof.offering_id = co.id
         JOIN course c ON co.course_id = c.id
         WHERE cof.user_id = ?
+        ORDER BY c.name, co.year DESC, co.semester DESC
     ";
-    $stmtF = mysqli_prepare($conn, $sqlFollowed);
-    if ($stmtF) {
-        mysqli_stmt_bind_param($stmtF, "i", $currentUserId);
-        mysqli_stmt_execute($stmtF);
-        $resF = mysqli_stmt_get_result($stmtF);
-        while ($rowF = mysqli_fetch_assoc($resF)) {
-            $followedCourseIds[] = (int)$rowF['course_id'];
+    $stmtOff = mysqli_prepare($conn, $sqlOfferings);
+    if ($stmtOff) {
+        mysqli_stmt_bind_param($stmtOff, "i", $currentUserId);
+        mysqli_stmt_execute($stmtOff);
+        $resOff = mysqli_stmt_get_result($stmtOff);
+        while ($row = mysqli_fetch_assoc($resOff)) {
+            $semesterLabel = $row['semester'] === '1' ? '1st' : '2nd';
+            $row['display_name'] = $row['course_name'] . ' (' . $row['year'] . ' - ' . $semesterLabel . ' Sem)';
+            $allOfferingOptions[] = $row;
         }
-        mysqli_stmt_close($stmtF);
+        mysqli_stmt_close($stmtOff);
     }
 }
+
 
 // -------------------------
 // 2) Costruisco la query base (senza LIMIT)
@@ -140,14 +99,14 @@ $conditions = ["n.status = 'published'"];
 $params = [];
 $types  = "";
 
-// filtro corso specifico
-if (!is_null($courseFilter)) {
-    $conditions[] = "c.id = ?";
+// filtro offering specifico
+if (!is_null($offeringFilter)) {
+    $conditions[] = "co.id = ?";
     $types       .= "i";
-    $params[]     = $courseFilter;
+    $params[]     = $offeringFilter;
 }
 
-// filtro "My courses" → note dei corsi seguiti
+// filtro "My courses" → note dei course offerings seguiti
 if ($filterMyCourses && $currentUserId !== null) {
     $conditions[] = "EXISTS (
         SELECT 1
@@ -185,7 +144,8 @@ if ($sort === 'votes') {
 // -------------------------
 $totalResults = 0;
 
-if ($searchTerm !== '' || !is_null($courseFilter)) {
+if ($searchTerm !== '' || !is_null($offeringFilter) || $filterMyCourses) {
+
     $sqlCount = "
         SELECT COUNT(DISTINCT n.id) AS total
         FROM note n
@@ -303,7 +263,13 @@ if ($resultCourses) {
                 <div>
                     <h1 class="h4 mb-1">Notes</h1>
                     <small class="text-muted">
-                        <?php if ($searchTerm === '' && is_null($courseFilter)): ?>
+                        <?php if ($offeringInfo): ?>
+                            <?php 
+                            $semesterLabel = $offeringInfo['semester'] === '1' ? '1st' : '2nd';
+                            echo htmlspecialchars($offeringInfo['course_name']) . ' - ' . 
+                                 htmlspecialchars($offeringInfo['year']) . ' (' . $semesterLabel . ' Semester)';
+                            ?>
+                        <?php elseif ($searchTerm === '' && is_null($offeringFilter) && !$filterMyCourses): ?>
                             Latest updated notes
                         <?php else: ?>
                             Filtered results 
@@ -325,7 +291,9 @@ if ($resultCourses) {
             <input type="hidden" name="limit" value="<?php echo (int)$limit; ?>">
 
             <div class="col-12 col-lg-6">
+                <label for="home-search" class="visually-hidden">Search notes</label>
                 <input
+                    id="home-search"
                     type="text"
                     class="form-control"
                     name="q"
@@ -335,27 +303,30 @@ if ($resultCourses) {
             </div>
 
             <div class="col-6 col-lg-2">
-                <select name="course_id" class="form-select">
-                    <option value="">All courses</option>
+                <label for="offering-select" class="visually-hidden">Filter by offering</label>
+                <select id="offering-select" name="offering_id" class="form-select">
+                    <option value="">All notes</option>
 
                     <?php if ($currentUserId !== null): ?>
                         <option value="my" <?php echo $filterMyCourses ? 'selected' : ''; ?>>
-                            My courses
+                            My offerings
                         </option>
                     <?php endif; ?>
 
-                    <?php foreach ($courseOptions as $course): ?>
-                        <option value="<?php echo (int)$course['id']; ?>"
-                            <?php echo (!$filterMyCourses && $courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
-                            <?php echo htmlspecialchars($course['name']); ?>
+                    <?php foreach ($allOfferingOptions as $offering): ?>
+                        <option value="<?php echo (int)$offering['id']; ?>"
+                            <?php echo (!$filterMyCourses && $offeringFilter === (int)$offering['id']) ? 'selected' : ''; ?>>
+                            <?php echo htmlspecialchars($offering['display_name']); ?>
                         </option>
                     <?php endforeach; ?>
+
                 </select>
             </div>
 
 
             <div class="col-6 col-lg-2">
-                <select name="sort" class="form-select">
+                <label for="sort-select" class="visually-hidden">Sort results</label>
+                <select id="sort-select" name="sort" class="form-select">
                     <option value="date" <?php echo $sort === 'date' ? 'selected' : ''; ?>>
                         Most recent
                     </option>
@@ -372,11 +343,12 @@ if ($resultCourses) {
             </div>
         </form>
 
-        <?php if ($searchTerm !== '' || !is_null($courseFilter)): ?>
+        <?php if ($searchTerm !== '' || !is_null($offeringFilter) || $filterMyCourses): ?>
             <p class="text-muted small mt-2 mb-0">
                 Found <?php echo $totalResults; ?> notes.
             </p>
         <?php endif; ?>
+
     </div>
 
     <div class="row">
@@ -428,121 +400,42 @@ if ($resultCourses) {
                 <?php endforeach; ?>
 
                 <!-- Sempre e solo "Load more" -->
-                <div class="d-flex justify-content-center mt-3">
-                    <?php
-                        $loadMoreParams = [
-                            'page'  => 'home',
-                            'limit' => $limit + $loadMoreStep,
-                        ];
-                        if ($searchTerm !== '') {
-                            $loadMoreParams['q'] = $searchTerm;
-                        }
-                        if ($filterMyCourses) {
-                            $loadMoreParams['course_id'] = 'my';
-                        } elseif (!is_null($courseFilter)) {
-                            $loadMoreParams['course_id'] = $courseFilter;
-                        }
-                        if ($sort !== 'date') {
-                            $loadMoreParams['sort'] = $sort;
-                        }
-                        $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
-                    ?>
-                    <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
-                        Load more
-                    </a>
-                </div>
-            <?php endif; ?>
-        </div>
+                <?php
+                    // Se sto filtrando e ho il totale, capisco se ci sono ancora note
+                    $hasMore = true;
+                    if ($totalResults > 0 && $limit >= $totalResults) {
+                        $hasMore = false;
+                    }
+                ?>
 
-        <!-- Sezione All the courses -->
-        <hr class="my-5">
-        <div class="mb-4">
-            <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="fs-4">🎓</span>
-                    <div>
-                        <h2 class="h4 mb-1">All courses</h2>
-                        <small class="text-muted">
-                            Browse all courses that currently have published notes.
-                        </small>
-                    </div>
-                </div>
-            </div>
-
-            <?php if (empty($courseOptions)): ?>
-                <p class="text-muted">There are no courses with notes yet.</p>
-            <?php else: ?>
-                <div class="row g-3">
-                    <?php foreach ($courseOptions as $course): ?>
+                <?php if ($hasMore): ?>
+                    <div class="d-flex justify-content-center mt-3">
                         <?php
-                            $cid          = (int)$course['id'];
-                            $alreadyAdded = in_array($cid, $followedCourseIds, true);
+                            $loadMoreParams = [
+                                'page'  => 'home',
+                                'limit' => $limit + $loadMoreStep,
+                            ];
+                            if ($searchTerm !== '') {
+                                $loadMoreParams['q'] = $searchTerm;
+                            }
+                            if ($filterMyCourses) {
+                                $loadMoreParams['offering_id'] = 'my';
+                            } elseif (!is_null($offeringFilter)) {
+                                $loadMoreParams['offering_id'] = $offeringFilter;
+                            }
+                            if ($sort !== 'date') {
+                                $loadMoreParams['sort'] = $sort;
+                            }
+                            $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
                         ?>
-                        <div class="col-12 col-md-6 col-lg-4">
-                            <div class="card border-0 shadow-sm rounded-4 h-100">
-                                <div class="card-body d-flex flex-column">
-                                    <div class="d-flex justify-content-between align-items-start mb-2">
-                                        <h3 class="h6 mb-0">
-                                            <?php echo htmlspecialchars($course['name']); ?>
-                                        </h3>
+                        <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
+                            Load more
+                        </a>
+                    </div>
+                <?php endif; ?>
 
-                                        <?php if ($currentUserId !== null): ?>
-                                        <form method="post" class="ms-2">
-                                            <input type="hidden" name="page" value="home">
-                                            <input type="hidden" name="course_id" value="<?php echo $cid; ?>">
 
-                                            <?php if ($alreadyAdded): ?>
-                                                <button
-                                                    type="submit"
-                                                    name="unfollow_course"
-                                                    class="btn btn-sm btn-outline-danger"
-                                                >
-                                                    Remove course
-                                                </button>
-                                            <?php else: ?>
-                                                <button
-                                                    type="submit"
-                                                    name="follow_course"
-                                                    class="btn btn-sm btn-outline-success"
-                                                >
-                                                    Add course
-                                                </button>
-                                            <?php endif; ?>
-                                        </form>
-                                    <?php endif; ?>
-                                    
-                                    </div>
-                                    <p class="text-muted small mb-3">
-                                        Study programme course
-                                    </p>
 
-                                    <div class="mt-auto d-flex justify-content-between align-items-center">
-                                        <?php
-                                            $courseUrlParams = [
-                                                'page'      => 'home',
-                                                'course_id' => $cid,
-                                                'limit'     => $limit,
-                                            ];
-                                            if ($searchTerm !== '') {
-                                                $courseUrlParams['q'] = $searchTerm;
-                                            }
-                                            if ($sort !== 'date') {
-                                                $courseUrlParams['sort'] = $sort;
-                                            }
-                                            $courseUrl = 'index.php?' . http_build_query($courseUrlParams);
-                                        ?>
-                                        <a
-                                            href="<?php echo htmlspecialchars($courseUrl); ?>"
-                                            class="small text-primary text-decoration-none"
-                                        >
-                                            View notes → 
-                                        </a>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
             <?php endif; ?>
         </div>
     </div>

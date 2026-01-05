@@ -82,8 +82,9 @@ if ($resultTeacherOptions) {
       >
         <!-- Titolo -->
         <div class="col-12">
-          <label class="form-label">Title *</label>
+          <label for="upload-title" class="form-label">Title *</label>
           <input
+            id="upload-title"
             type="text"
             name="title"
             class="form-control"
@@ -94,8 +95,8 @@ if ($resultTeacherOptions) {
 
         <!-- Facoltà -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Programme *</label>
-          <select class="form-select" name="programme" required>
+          <label for="upload-programme" class="form-label">Programme *</label>
+          <select id="upload-programme" class="form-select" name="programme" required>
             <option value="" disabled selected>Select programme</option>
             <!-- TODO: prendili dal db -->
              <?php foreach ($programmeOptions as $programme): ?>
@@ -109,8 +110,8 @@ if ($resultTeacherOptions) {
 
         <!-- Corso (Esame) -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Course (Exam) *</label>
-          <select class="form-select" name="course" required>
+          <label for="upload-course" class="form-label">Course (Exam) *</label>
+          <select id="upload-course" class="form-select" name="course" required>
             <option value="" disabled selected>Select course</option>
             <?php foreach ($courseOptions as $course): ?>
                 <option value="<?php echo (int)$course['id']; ?>"
@@ -123,8 +124,8 @@ if ($resultTeacherOptions) {
 
         <!-- Docente -->
         <div class="col-12 col-md-6">
-          <label class="form-label">Teacher *</label>
-          <select class="form-select" name="teacher" required>
+          <label for="upload-teacher" class="form-label">Teacher *</label>
+          <select id="upload-teacher" class="form-select" name="teacher" required>
             <option value="" disabled selected>Select teacher</option>
             <?php foreach ($teacherOptions as $teacher): ?>
                 <option value="<?php echo (int)$teacher['id']; ?>"
@@ -137,59 +138,61 @@ if ($resultTeacherOptions) {
 
         <!-- Tipo di File (3 bottoni) -->
         <div class="col-12 col-md-6">
-          <label class="form-label d-block">File type *</label>
-          <div class="btn-group w-100 filetype-toggle" role="group">
-            <input
-              type="radio"
-              class="btn-check"
-              name="tipo_file"
-              id="filePdf"
-              value="pdf"
-              checked
-            />
-            <label
-              class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
-              for="filePdf"
-            >
-              <i class="bi bi-file-earmark-pdf mb-1"></i>
-              <span class="small">PDF</span>
-            </label>
+          <fieldset class="mb-0">
+            <legend class="form-label">File type *</legend>
+            <div class="btn-group w-100 filetype-toggle" role="group" aria-label="File type">
+              <input
+                type="radio"
+                class="btn-check"
+                name="tipo_file"
+                id="filePdf"
+                value="pdf"
+                checked
+              />
+              <label
+                class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
+                for="filePdf"
+              >
+                <i class="bi bi-file-earmark-pdf mb-1"></i>
+                <span class="small">PDF</span>
+              </label>
 
-            <input
-              type="radio"
-              class="btn-check"
-              name="tipo_file"
-              id="fileImg"
-              value="immagine"
-            />
-            <label
-              class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
-              for="fileImg"
-            >
-              <i class="bi bi-image mb-1"></i>
-              <span class="small">Photo</span>
-            </label>
+              <input
+                type="radio"
+                class="btn-check"
+                name="tipo_file"
+                id="fileImg"
+                value="immagine"
+              />
+              <label
+                class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
+                for="fileImg"
+              >
+                <i class="bi bi-image mb-1"></i>
+                <span class="small">Photo</span>
+              </label>
 
-            <input
-              type="radio"
-              class="btn-check"
-              name="tipo_file"
-              id="fileTxt"
-              value="testo"
-            />
-            <label
-              class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
-              for="fileTxt"
-            >
-              <i class="bi bi-file-earmark-text mb-1"></i>
-              <span class="small">Text</span>
-            </label>
-          </div>
+              <input
+                type="radio"
+                class="btn-check"
+                name="tipo_file"
+                id="fileTxt"
+                value="testo"
+              />
+              <label
+                class="btn btn-outline-primary d-flex flex-column align-items-center py-2"
+                for="fileTxt"
+              >
+                <i class="bi bi-file-earmark-text mb-1"></i>
+                <span class="small">Text</span>
+              </label>
+            </div>
+          </fieldset>
         </div>
 
         <!-- Dropzone File -->
         <div class="col-12">
-          <label class="form-label">File *</label>
+          <label for="upload-file" class="form-label">File *</label>
           <div class="dropzone mb-2">
             <div class="dropzone-icon mb-2">
               <i class="bi bi-cloud-arrow-up"></i>
@@ -199,6 +202,7 @@ if ($resultTeacherOptions) {
           </div>
           <!-- input reale -->
           <input
+            id="upload-file"
             type="file"
             class="form-control"
             name="file_appunto"
@@ -208,8 +212,9 @@ if ($resultTeacherOptions) {
 
         <!-- Descrizione -->
         <div class="col-12">
-          <label class="form-label">Description (Optional)</label>
+          <label for="upload-description" class="form-label">Description (Optional)</label>
           <textarea
+            id="upload-description"
             class="form-control"
             name="descrizione"
             rows="4"

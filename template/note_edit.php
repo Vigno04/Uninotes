@@ -91,8 +91,8 @@ if ($resultTopicOptions) {
 
                                 <!-- Corso (Esame) -->
                     <div class="col-12 col-md-6 mb-3">
-                    <label class="form-label">Course (Exam) *</label>
-                    <select class="form-select" name="course" required>
+                    <label for="course-select" class="form-label">Course (Exam) *</label>
+                    <select id="course-select" class="form-select" name="course" required>
                         <option value="" disabled selected>Select course</option>
                         <?php foreach ($courseOptions as $course): ?>
                             <option value="<?php echo (int)$course['id']; ?>"
@@ -105,8 +105,8 @@ if ($resultTopicOptions) {
 
                     <!-- Topic selection -->
                     <div class="col-12 col-md-6 mb-3">
-                        <label class="form-label">Topic *</label>
-                        <select class="form-select" name="topic" required>
+                        <label for="topic-select" class="form-label">Topic *</label>
+                        <select id="topic-select" class="form-select" name="topic" required>
                         <option value="" disabled selected>Select topic</option>
                         <?php foreach ($topicOptions as $topic): ?>
                             <option value="<?php echo (int)$topic['id']; ?>"
@@ -279,34 +279,40 @@ function deleteFile(fileId, filename) {
 }
 
 // Course offering change handler
-document.getElementById('course_offering').addEventListener('change', function() {
-    const offeringId = this.value;
-    const topicSelect = document.getElementById('topic');
-    
-    if (offeringId) {
-        topicSelect.disabled = false;
-        topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
-        
-        fetch(`get_topics.php?offering_id=${offeringId}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error(data.error);
-                    return;
-                }
-                data.forEach(topic => {
-                    const option = document.createElement('option');
-                    option.value = topic.id;
-                    option.textContent = topic.name;
-                    topicSelect.appendChild(option);
-                });
-            })
-            .catch(error => console.error('Error fetching topics:', error));
-    } else {
-        topicSelect.disabled = true;
-        topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
-    }
-});
+(function () {
+    const courseEl = document.getElementById('course_offering') || document.getElementById('course-select');
+    const topicSelect = document.getElementById('topic') || document.getElementById('topic-select');
+
+    if (!courseEl || !topicSelect) return; // nothing to do on this page
+
+    courseEl.addEventListener('change', function() {
+        const offeringId = this.value;
+
+        if (offeringId) {
+            topicSelect.disabled = false;
+            topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
+
+            fetch(`get_topics.php?offering_id=${offeringId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        console.error(data.error);
+                        return;
+                    }
+                    data.forEach(topic => {
+                        const option = document.createElement('option');
+                        option.value = topic.id;
+                        option.textContent = topic.name;
+                        topicSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching topics:', error));
+        } else {
+            topicSelect.disabled = true;
+            topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
+        }
+    });
+})();
 
 // Mobile view toggle
 function showMobileView(view) {

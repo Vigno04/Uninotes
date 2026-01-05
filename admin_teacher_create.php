@@ -189,7 +189,7 @@ if ($resList) {
 
                     <!-- Alerts -->
                     <?php if (!empty($errors)): ?>
-                        <div class="alert alert-danger">
+                        <div class="alert alert-danger" role="alert">
                             <ul class="mb-0">
                                 <?php foreach ($errors as $e): ?>
                                     <li><?php echo htmlspecialchars($e); ?></li>
@@ -199,7 +199,7 @@ if ($resList) {
                     <?php endif; ?>
 
                     <?php if ($success): ?>
-                        <div class="alert alert-success">
+                        <div class="alert alert-success" role="status">
                             <?php echo htmlspecialchars($success); ?>
                         </div>
                     <?php endif; ?>
@@ -208,39 +208,43 @@ if ($resList) {
                     <form method="post" class="mb-4">
                         <div class="row g-3">
                             <div class="col-12 col-md-4">
-                                <label class="form-label">First name *</label>
+                                <label for="teacher-name" class="form-label">First name *</label>
                                 <input
+                                    id="teacher-name"
                                     type="text"
                                     name="name"
                                     class="form-control"
-                                    required
+                                    required aria-required="true"
                                     value="<?php echo htmlspecialchars($name ?? ''); ?>"
                                 >
                             </div>
                             <div class="col-12 col-md-4">
-                                <label class="form-label">Surname *</label>
+                                <label for="teacher-surname" class="form-label">Surname *</label>
                                 <input
+                                    id="teacher-surname"
                                     type="text"
                                     name="surname"
                                     class="form-control"
-                                    required
+                                    required aria-required="true"
                                     value="<?php echo htmlspecialchars($surname ?? ''); ?>"
                                 >
                             </div>
                             <div class="col-12 col-md-4">
-                                <label class="form-label">Email *</label>
+                                <label for="teacher-email" class="form-label">Email *</label>
                                 <input
+                                    id="teacher-email"
                                     type="email"
                                     name="email"
                                     class="form-control"
-                                    required
+                                    required aria-required="true"
                                     value="<?php echo htmlspecialchars($email ?? ''); ?>"
                                 >
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Department</label>
+                                <label for="teacher-department" class="form-label">Department</label>
                                 <input
+                                    id="teacher-department"
                                     type="text"
                                     name="department"
                                     class="form-control"
@@ -250,8 +254,9 @@ if ($resList) {
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Phone number</label>
+                                <label for="teacher-phone" class="form-label">Phone number</label>
                                 <input
+                                    id="teacher-phone"
                                     type="text"
                                     name="phone_number"
                                     class="form-control"
@@ -260,8 +265,8 @@ if ($resList) {
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Unibo site</label>
-                                <input
+                                <label for="teacher-unibo" class="form-label">Unibo site</label>
+                                <input id="teacher-unibo"
                                     type="url"
                                     name="unibo_site"
                                     class="form-control"
@@ -271,8 +276,8 @@ if ($resList) {
                             </div>
 
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Personal site</label>
-                                <input
+                                <label for="teacher-personal" class="form-label">Personal site</label>
+                                <input id="teacher-personal"
                                     type="url"
                                     name="personal_site"
                                     class="form-control"
@@ -319,7 +324,7 @@ if ($resList) {
                                             </td>
                                             <td class="small">
                                                 <?php if (!empty($t['unibo_site'])): ?>
-                                                    <a href="<?php echo htmlspecialchars($t['unibo_site']); ?>" target="_blank" rel="noopener">
+                                                    <a href="<?php echo htmlspecialchars($t['unibo_site']); ?>" target="_blank" rel="noopener noreferrer">
                                                         Open
                                                     </a>
                                                 <?php else: ?>
