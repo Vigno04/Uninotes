@@ -10,34 +10,8 @@ if (!isset($_SESSION['person_id'])) {
 
 $personId = (int)$_SESSION['person_id'];
 
-$sql = "
-    SELECT
-        n.id,
-        n.title,
-        COALESCE(n.published_at, n.created_at) AS note_date,
-        c.name AS course_name,
-        n.vote_count
-    FROM vote v
-    JOIN note n ON v.note_id = n.id
-    JOIN topic t ON n.topic_id = t.id
-    JOIN course_offering co ON t.offering_id = co.id
-    JOIN course c ON co.course_id = c.id
-    WHERE v.user_id = ?
-      AND v.vote = 1
-    GROUP BY n.id
-    ORDER BY note_date DESC
-";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $personId);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-
-$notes = [];
-while ($row = mysqli_fetch_assoc($res)) {
-    $notes[] = $row;
-}
-mysqli_stmt_close($stmt);
+$voteModel = new VoteModel();
+$notes = $voteModel->getNotesUpvotedByUser($personId);
 ?>
 
 <div class="container py-4 py-lg-5">

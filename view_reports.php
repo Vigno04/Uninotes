@@ -7,20 +7,14 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
+$correctionModel = new CorrectionModel();
+
 // --- AZIONE POST: segna come risolto ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['report_id'])) {
     if ($_POST['action'] === 'resolve') {
         $reportId = (int)$_POST['report_id'];
-
-        $stmt = mysqli_prepare($conn, "
-            UPDATE correction
-            SET resolved = 1,
-                resolved_at = NOW()
-            WHERE id = ?
-        ");
-        mysqli_stmt_bind_param($stmt, "i", $reportId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $noteId = (int)($_POST['note_id'] ?? 0);
+        $correctionModel->resolveCorrection($reportId, $noteId);
     }
 
     // redirect per evitare il resubmit
@@ -29,35 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['rep
 }
 
 // --- LETTURA REPORT DAL DB ---
-$sql = "
-    SELECT 
-        c.id,
-        c.message,
-        c.file_id,
-        c.created_at,
-        c.resolved,
-        c.resolved_at,
-        n.id    AS note_id,
-        n.title AS note_title,
-        f.filename,
-        p.name,
-        p.surname
-    FROM correction c
-    JOIN note n      ON c.note_id = n.id
-    LEFT JOIN file f ON c.file_id = f.id
-    LEFT JOIN user u ON c.reported_by = u.person_id
-    LEFT JOIN person p ON p.id = u.person_id
-    ORDER BY c.resolved ASC, c.created_at DESC
-    LIMIT 20
-";
-
-$result = mysqli_query($conn, $sql);
-$reports = [];
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $reports[] = $row;
-    }
-}
+$reports = $correctionModel->getAllCorrections();
 ?>
 
 <div class="container py-4 py-lg-5">
@@ -76,6 +42,7 @@ if ($result) {
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
+                                <caption class="visually-hidden">List of correction reports with note details, reporter, message, status and actions</caption>
                                 <thead class="table-light">
                                     <tr>
                                         <th>Note</th>

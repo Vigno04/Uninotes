@@ -2,7 +2,7 @@
 // admindashboard.php
 
 // Qui assumo che bootstrap.php sia già stato incluso da index.php
-// e che $conn e $_SESSION siano disponibili.
+// e che i modelli e $_SESSION siano disponibili.
 
 // 1) Controllo: solo admin
 if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
@@ -11,31 +11,13 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
 }
 
 $personId = $_SESSION['person_id'];
+$personModel = new PersonModel();
+$adminModel = new AdminModel();
 
 // -----------------------------------------------------
 // Dati dell'admin (per l'header in alto)
 // -----------------------------------------------------
-$sql = "
-    SELECT 
-        p.name,
-        p.surname,
-        p.email,
-        p.profile_picture,
-        u.created_at,
-        u.role,
-        u.last_login
-    FROM person p
-    JOIN user u ON p.id = u.person_id
-    WHERE p.id = ?
-    LIMIT 1
-";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $personId);
-mysqli_stmt_execute($stmt);
-$result   = mysqli_stmt_get_result($stmt);
-$admin    = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$admin = $personModel->getPersonById($personId);
 
 if (!$admin) {
     header('Location: logout.php');
@@ -44,8 +26,8 @@ if (!$admin) {
 
 $fullName  = $admin['name'] . ' ' . $admin['surname'];
 $email     = $admin['email'];
-$created   = $admin['created_at'];
-$lastLogin = $admin['last_login'];
+$created   = $admin['created_at'] ?? '';
+$lastLogin = $admin['last_login'] ?? '';
 
 $profilePicture = $admin['profile_picture'];
 if (empty($profilePicture)) {
@@ -59,96 +41,22 @@ $initials = strtoupper(
 // -----------------------------------------------------
 // 2) Statistiche generali
 // -----------------------------------------------------
-$stats = [
-    'users'       => 0,
-    'courses'     => 0,
-    'notes'       => 0,
-    'corrections' => 0,
-];
-
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM user");
-if ($res) $stats['users'] = (int)mysqli_fetch_assoc($res)['c'];
-
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM course");
-if ($res) $stats['courses'] = (int)mysqli_fetch_assoc($res)['c'];
-
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM note");
-if ($res) $stats['notes'] = (int)mysqli_fetch_assoc($res)['c'];
-
-$res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM correction WHERE resolved = 0");
-if ($res) $stats['corrections'] = (int)mysqli_fetch_assoc($res)['c'];
+$stats = $adminModel->getStats();
 
 // -----------------------------------------------------
 // 3) Ultimi appunti caricati
 // -----------------------------------------------------
-$recentNotes = [];
-$sqlNotes = "
-    SELECT 
-        n.id,
-        n.title,
-        n.status,
-        n.created_at,
-        p.name,
-        p.surname
-    FROM note n
-    LEFT JOIN user u ON n.owner_id = u.person_id
-    LEFT JOIN person p ON u.person_id = p.id
-    ORDER BY n.created_at DESC
-    LIMIT 5
-";
-
-if ($res = mysqli_query($conn, $sqlNotes)) {
-    while ($row = mysqli_fetch_assoc($res)) {
-        $recentNotes[] = $row;
-    }
-}
+$recentNotes = $adminModel->getRecentNotes(10);
 
 // -----------------------------------------------------
 // 4) Ultime segnalazioni (correction)
 // -----------------------------------------------------
-$recentReports = [];
-$sqlReports = "
-    SELECT 
-        c.id,
-        c.created_at,
-        c.resolved,
-        c.message,
-        n.title AS note_title
-    FROM correction c
-    JOIN note n ON c.note_id = n.id
-    ORDER BY c.created_at DESC
-    LIMIT 5
-";
-
-if ($res = mysqli_query($conn, $sqlReports)) {
-    while ($row = mysqli_fetch_assoc($res)) {
-        $recentReports[] = $row;
-    }
-}
+$recentReports = $adminModel->getRecentCorrections(10);
 
 // -----------------------------------------------------
 // 5) Note per corso (per il grafico) - top 5 corsi
 // -----------------------------------------------------
-$notesByCourse = [];
-
-$sqlNotesByCourse = "
-    SELECT 
-        c.name AS course_name,
-        COUNT(n.id) AS note_count
-    FROM course c
-    JOIN course_offering co ON co.course_id = c.id
-    JOIN topic t ON t.offering_id = co.id
-    JOIN note n ON n.topic_id = t.id
-    GROUP BY c.id, c.name
-    ORDER BY note_count DESC
-    LIMIT 5
-";
-
-if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
-    while ($row = mysqli_fetch_assoc($res)) {
-        $notesByCourse[] = $row;
-    }
-}
+$notesByCourse = $adminModel->getNotesByCourse();
 
 ?>
 
@@ -261,7 +169,7 @@ if ($res = mysqli_query($conn, $sqlNotesByCourse)) {
                     <!-- Ultimi appunti -->
                     <h2 class="h6 mb-2">Recent notes</h2>
                     <div class="table-responsive mb-4">
-                        <table class="table table-sm align-middle mb-0">
+                        <table class="table table-sm align-middle mb-0">                            <caption class="visually-hidden">List of recent correction reports with note title, reporter, message and date</caption>                            <caption class="visually-hidden">List of recently uploaded notes with title, author, status and date</caption>
                             <thead class="table-light">
                                 <tr>
                                     <th>Title</th>

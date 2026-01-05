@@ -37,6 +37,7 @@ $titleValue            = '';
 $contentValue          = '';
 $existingFiles         = [];
 $noteStatus            = 'draft';
+$selectedTopicCourseId = null; // Per preservare il course_id del topic selezionato
 
 $courseOfferings = [];
 $userOfferings = $noteModel->getUserFollowedOfferings($userId);
@@ -74,6 +75,7 @@ if ($mode === 'edit') {
         $offering = $noteModel->getOfferingByTopicId($selectedTopic);
         if ($offering) {
             $selectedCourseOffering = $offering['id'];
+            $selectedTopicCourseId = $offering['course_id'] ?? null; // Usa il course_id dall'offering
             // Load topics for this offering
             $topicsData = $noteModel->getTopicsByOfferingId($selectedCourseOffering);
             foreach ($topicsData as $topic) {
@@ -123,6 +125,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_file_id'])) {
             $offering = $noteModel->getOfferingByTopicId($selectedTopic);
             if ($offering) {
                 $selectedCourseOffering = $offering['id'];
+                $selectedTopicCourseId = $offering['course_id'] ?? null; // Usa il course_id dall'offering
                 $topicsData = $noteModel->getTopicsByOfferingId($selectedCourseOffering);
                 $topics = [];
                 foreach ($topicsData as $topic) {
@@ -246,6 +249,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete_file_id'])) {
                     $offering = $noteModel->getOfferingByTopicId($selectedTopic);
                     if ($offering) {
                         $selectedCourseOffering = $offering['id'];
+                        $selectedTopicCourseId = $offering['course_id'] ?? null; // Usa il course_id dall'offering
                         $topicsData = $noteModel->getTopicsByOfferingId($selectedCourseOffering);
                         $topics = [];
                         foreach ($topicsData as $topic) {

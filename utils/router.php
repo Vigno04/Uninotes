@@ -58,7 +58,11 @@ class Router
         ],
         'user_notes_uploaded'=> [
             'file'=> 'user_notes_uploaded.php',
-            'title' => 'Uninotes - Note Uploaded',
+            'title' => 'Uninotes - My Notes',
+        ],
+        'my_drafts'=> [
+            'file'=> 'my_drafts.php',
+            'title' => 'Uninotes - My Drafts',
         ],
         'admin_course_edit'=> [
             'file'=> 'admin_course_edit.php',

@@ -6,34 +6,22 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
-// Handle approval = admin fills the teacher details manually
+$teacherModel = new TeacherModel();
+
+// Handle approval/rejection
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uid = (int)$_POST['user_id'];
 
     if (isset($_POST['reject'])) {
-        mysqli_query($conn, "DELETE FROM teacher WHERE person_id = $uid");
+        $teacherModel->rejectRequest($uid);
     }
 
     header("Location: index.php?page=admin_teacher_requests");
     exit;
 }
 
-// Fetch pending teacher rows (all fields null)
-$sql = "
-    SELECT 
-        t.person_id,
-        p.name,
-        p.surname,
-        p.email
-    FROM teacher t
-    JOIN person p ON p.id = t.person_id
-    WHERE t.department IS NULL
-      AND t.unibo_site IS NULL
-      AND t.phone_number IS NULL
-      AND t.personal_site IS NULL
-";
-$result = mysqli_query($conn, $sql);
-$requests = mysqli_fetch_all($result, MYSQLI_ASSOC);
+// Fetch pending teacher requests
+$requests = $teacherModel->getPendingRequests();
 ?>
 
 <div class="container py-4">
@@ -43,6 +31,7 @@ $requests = mysqli_fetch_all($result, MYSQLI_ASSOC);
         <p class="text-muted">No pending requests.</p>
     <?php else: ?>
         <table class="table table-sm">
+            <caption class="visually-hidden">List of pending teacher requests with name, email, request date and actions</caption>
             <thead class="table-light">
                 <tr>
                     <th>Name</th>

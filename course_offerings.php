@@ -19,28 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $offeringId = isset($_POST['offering_id']) ? (int)$_POST['offering_id'] : 0;
 
     if ($offeringId > 0) {
+        $courseModel = new CourseModel();
+        
         if (isset($_POST['follow_offering'])) {
-            $sqlFollow = "
-                INSERT IGNORE INTO course_offering_follow (offering_id, user_id)
-                VALUES (?, ?)
-            ";
-            $stmtFollow = mysqli_prepare($conn, $sqlFollow);
-            if ($stmtFollow) {
-                mysqli_stmt_bind_param($stmtFollow, "ii", $offeringId, $currentUserId);
-                mysqli_stmt_execute($stmtFollow);
-                mysqli_stmt_close($stmtFollow);
-            }
+            $courseModel->followCourseOffering($offeringId, $currentUserId);
         } elseif (isset($_POST['unfollow_offering'])) {
-            $sqlUnfollow = "
-                DELETE FROM course_offering_follow
-                WHERE offering_id = ? AND user_id = ?
-            ";
-            $stmtUnf = mysqli_prepare($conn, $sqlUnfollow);
-            if ($stmtUnf) {
-                mysqli_stmt_bind_param($stmtUnf, "ii", $offeringId, $currentUserId);
-                mysqli_stmt_execute($stmtUnf);
-                mysqli_stmt_close($stmtUnf);
-            }
+            $courseModel->unfollowCourseOffering($offeringId, $currentUserId);
         }
     }
 
@@ -49,16 +33,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 // Get course info
-$course = null;
-$sqlCourse = "SELECT id, name, description FROM course WHERE id = ?";
-$stmtCourse = mysqli_prepare($conn, $sqlCourse);
-if ($stmtCourse) {
-    mysqli_stmt_bind_param($stmtCourse, "i", $courseId);
-    mysqli_stmt_execute($stmtCourse);
-    $resCourse = mysqli_stmt_get_result($stmtCourse);
-    $course = mysqli_fetch_assoc($resCourse);
-    mysqli_stmt_close($stmtCourse);
-}
+$courseModel = new CourseModel();
+$course = $courseModel->getCourse($courseId);
 
 if (!$course) {
     header('Location: index.php?page=courses');
@@ -66,53 +42,10 @@ if (!$course) {
 }
 
 // Get course offerings with notes count and teachers
-$offerings = [];
-$sqlOfferings = "
-    SELECT 
-        co.id,
-        co.year,
-        co.semester,
-        COUNT(DISTINCT n.id) AS note_count,
-        GROUP_CONCAT(DISTINCT CONCAT(p.name, ' ', p.surname) SEPARATOR ', ') AS teachers
-    FROM course_offering co
-    LEFT JOIN topic t ON t.offering_id = co.id
-    LEFT JOIN note n ON n.topic_id = t.id AND n.status = 'published'
-    LEFT JOIN course_offering_teacher cot ON cot.offering_id = co.id
-    LEFT JOIN teacher te ON te.person_id = cot.teacher_id
-    LEFT JOIN person p ON p.id = te.person_id
-    WHERE co.course_id = ?
-    GROUP BY co.id, co.year, co.semester
-    ORDER BY co.year DESC, co.semester DESC
-";
-
-$stmtOff = mysqli_prepare($conn, $sqlOfferings);
-if ($stmtOff) {
-    mysqli_stmt_bind_param($stmtOff, "i", $courseId);
-    mysqli_stmt_execute($stmtOff);
-    $resOff = mysqli_stmt_get_result($stmtOff);
-    while ($rowOff = mysqli_fetch_assoc($resOff)) {
-        $offerings[] = $rowOff;
-    }
-    mysqli_stmt_close($stmtOff);
-}
+$offerings = $courseModel->getCourseOfferingsWithNotes($courseId);
 
 // Get followed offerings for this user
-$followedOfferingIds = [];
-$sqlFollowed = "
-    SELECT offering_id
-    FROM course_offering_follow
-    WHERE user_id = ?
-";
-$stmtF = mysqli_prepare($conn, $sqlFollowed);
-if ($stmtF) {
-    mysqli_stmt_bind_param($stmtF, "i", $currentUserId);
-    mysqli_stmt_execute($stmtF);
-    $resF = mysqli_stmt_get_result($stmtF);
-    while ($rowF = mysqli_fetch_assoc($resF)) {
-        $followedOfferingIds[] = (int)$rowF['offering_id'];
-    }
-    mysqli_stmt_close($stmtF);
-}
+$followedOfferingIds = $courseModel->getFollowedOfferingIds($currentUserId);
 ?>
 
 <div class="container py-4">

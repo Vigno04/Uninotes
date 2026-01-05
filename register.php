@@ -12,56 +12,43 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     $pass2    = $_POST["password_confirm"] ?? "";
 
     // Basic validation
-    if ($name === "" || $surname === "" || $email === "" || $pass1 === "" || $pass2 === "") {
-        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Compila tutti i campi.</div>';
-    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci una email valida.</div>';
-    } elseif ($pass1 !== $pass2) {
-        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Le password non coincidono.</div>';
-    } else {
-        $userModel = new UserModel();
-
-        if (mysqli_fetch_assoc($checkResult)) {
-            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Esiste già un account con questa email.</div>';
+        if ($name === "" || $surname === "" || $email === "" || $pass1 === "" || $pass2 === "") {
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Compila tutti i campi.</div>';
+        } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci una email valida.</div>';
+        } elseif ($pass1 !== $pass2) {
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Le password non coincidono.</div>';
         } else {
-            $hashedPassword = password_hash($pass1, PASSWORD_DEFAULT);
-            $role = "user";
-
-            if (!mysqli_stmt_execute($personStmt)) {
-                $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Errore durante la registrazione (person).</div>';
+            $userModel = new UserModel();
+            
+            // Check if email already exists
+            if ($userModel->emailExists($email)) {
+                $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Esiste già un account con questa email.</div>';
             } else {
-                $personId = mysqli_insert_id($conn);
-
-                // Auto-login after registration
-                $_SESSION["person_id"] = $personId;
-                $_SESSION["name"]      = $name;
-                $_SESSION["surname"]   = $surname;
-                $_SESSION["email"]     = $email;
-                $_SESSION["role"]      = $role;
-
-                $insertUserSql = "INSERT INTO user (person_id, password, role) VALUES (?, ?, ?)";
-                $userStmt = mysqli_prepare($conn, $insertUserSql);
-                mysqli_stmt_bind_param($userStmt, "iss", $personId, $plainPassword, $role);
-
-                if (!mysqli_stmt_execute($userStmt)) {
-                    $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Errore durante la registrazione (user).</div>';
-                } else {
-                    // Auto-login after registration (optional)
+                // Hash password and register user
+                $hashedPassword = password_hash($pass1, PASSWORD_DEFAULT);
+                $role = "user";
+                
+                // Register the user
+                $personId = $userModel->createUser($name, $surname, $email, $hashedPassword, $role);
+                
+                if ($personId) {
+                    // Auto-login after registration
                     $_SESSION["person_id"] = $personId;
                     $_SESSION["name"]      = $name;
                     $_SESSION["surname"]   = $surname;
                     $_SESSION["email"]     = $email;
                     $_SESSION["role"]      = $role;
 
-                    header("Location: home.php");
+                    header("Location: index.php?page=home");
                     exit();
+                } else {
+                    $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Errore durante la registrazione.</div>';
                 }
             }
         }
-    }
 }
-
-
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>

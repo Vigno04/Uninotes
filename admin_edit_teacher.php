@@ -14,31 +14,8 @@ if ($userId <= 0) {
 }
 
 // Fetch basic user info + teacher row (if any)
-$sql = "
-    SELECT 
-        p.id,
-        p.name,
-        p.surname,
-        p.email,
-        u.role,
-        t.person_id      AS teacher_person_id,
-        t.department,
-        t.unibo_site,
-        t.phone_number,
-        t.personal_site
-    FROM person p
-    JOIN user u ON p.id = u.person_id
-    LEFT JOIN teacher t ON t.person_id = p.id
-    WHERE p.id = ?
-    LIMIT 1
-";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $userId);
-mysqli_stmt_execute($stmt);
-$res  = mysqli_stmt_get_result($stmt);
-$user = mysqli_fetch_assoc($res);
-mysqli_stmt_close($stmt);
+$teacherModel = new TeacherModel();
+$user = $teacherModel->getUserWithTeacherInfo($userId);
 
 if (!$user) {
     header('Location: index.php?page=manage_users');
@@ -57,13 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (is_null($user['teacher_person_id'])) {
         // create new teacher row
-        $sqlInsert = "
-            INSERT INTO teacher (person_id, department, unibo_site, phone_number, personal_site)
-            VALUES (?, ?, ?, ?, ?)
-        ";
-        $stmtIns = mysqli_prepare($conn, $sqlInsert);
-        mysqli_stmt_bind_param($stmtIns, "issss", $userId, $department, $unibo_site, $phone_number, $personal_site);
-        if (mysqli_stmt_execute($stmtIns)) {
+        if ($teacherModel->createTeacherProfile($userId, $department, $unibo_site, $phone_number, $personal_site)) {
             $successMessage = 'Teacher profile created successfully.';
             $user['teacher_person_id'] = $userId;
             $user['department']        = $department;
@@ -73,17 +44,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $errorMessage = 'Error creating teacher profile.';
         }
-        mysqli_stmt_close($stmtIns);
     } else {
         // update existing teacher row
-        $sqlUpdate = "
-            UPDATE teacher
-            SET department = ?, unibo_site = ?, phone_number = ?, personal_site = ?
-            WHERE person_id = ?
-        ";
-        $stmtUp = mysqli_prepare($conn, $sqlUpdate);
-        mysqli_stmt_bind_param($stmtUp, "ssssi", $department, $unibo_site, $phone_number, $personal_site, $userId);
-        if (mysqli_stmt_execute($stmtUp)) {
+        if ($teacherModel->updateTeacherProfile($userId, $department, $unibo_site, $phone_number, $personal_site)) {
             $successMessage = 'Teacher profile updated successfully.';
             $user['department']    = $department;
             $user['unibo_site']    = $unibo_site;
@@ -92,7 +55,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $errorMessage = 'Error updating teacher profile.';
         }
-        mysqli_stmt_close($stmtUp);
     }
 }
 ?>

@@ -8,30 +8,19 @@ if (!isset($_SESSION['person_id'])) {
 }
 
 $userId = $_SESSION['person_id'];
+$teacherModel = new TeacherModel();
 
 // Check if already teacher
-$sql = "SELECT person_id FROM teacher WHERE person_id = ?";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $userId);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-$isTeacher = mysqli_fetch_assoc($res);
-mysqli_stmt_close($stmt);
+$isTeacher = $teacherModel->isTeacher($userId);
 
 $message = "";
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$isTeacher) {
-    // Insert teacher row with empty details → means pending
-    $sqlInsert = "INSERT IGNORE INTO teacher (person_id) VALUES (?)";
-    $stmt2 = mysqli_prepare($conn, $sqlInsert);
-    mysqli_stmt_bind_param($stmt2, "i", $userId);
-
-    if (mysqli_stmt_execute($stmt2)) {
+    if ($teacherModel->requestTeacher($userId)) {
         $message = "Your request has been sent!";
     } else {
-        $message = "Error sending request.";
+        $message = "Error sending request or request already exists.";
     }
-    mysqli_stmt_close($stmt2);
 }
 ?>
 

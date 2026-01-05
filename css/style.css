@@ -86,12 +86,12 @@ button:focus,
 .btn-outline-primary.auth-secondary:focus {
     background: rgba(37, 99, 235, 0.04);
 }
-/* Slightly darker muted text for contrast */
+/* Slightly darker muted text for contrast - WCAG AA compliant */
 .auth-subheading,
 .auth-footer-text,
 .auth-muted-link,
 .small.text-muted {
-    color: var(--muted-600) !important;
+    color: #374151 !important; /* Darker grey for better contrast ratio (7:1 on white) */
 }
 
 .auth-card-wrapper {

@@ -19,27 +19,9 @@ $success = "";
 // 1) Lookup per select (programmes, teachers)
 // ============================
 
-$programmes = [];
-$resProg = mysqli_query($conn, "SELECT id, name FROM programme ORDER BY name");
-if ($resProg) {
-    while ($row = mysqli_fetch_assoc($resProg)) {
-        $programmes[] = $row;
-    }
-}
-
-$teachers = [];
-$sqlTeachers = "
-    SELECT t.person_id, p.name, p.surname
-    FROM teacher t
-    JOIN person p ON p.id = t.person_id
-    ORDER BY p.surname, p.name
-";
-$resTeachers = mysqli_query($conn, $sqlTeachers);
-if ($resTeachers) {
-    while ($row = mysqli_fetch_assoc($resTeachers)) {
-        $teachers[] = $row;
-    }
-}
+$courseModel = new CourseModel();
+$programmes = $courseModel->getAllProgrammes();
+$teachers = $courseModel->getTeachersList();
 
 // ============================
 // 2) Handle POST actions
@@ -66,30 +48,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($errors)) {
-            $sql = "INSERT INTO course (name, description, created_by, programme_id)
-                    VALUES (?, ?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            if ($stmt) {
-                // programme_id può essere NULL
-                if ($programmeId === null) {
-                    mysqli_stmt_bind_param($stmt, "ssii", $name, $description, $currentAdminId, $programmeId);
-                } else {
-                    mysqli_stmt_bind_param($stmt, "ssii", $name, $description, $currentAdminId, $programmeId);
-                }
-
-                if (mysqli_stmt_execute($stmt)) {
-                    $newId  = mysqli_insert_id($conn);
-                    $courseId = $newId;
-                    $success = "Course created successfully.";
-                    // redirect alla pagina di edit per evitare resubmit
-                    header("Location: index.php?page=admin-course-edit&id=" . $courseId);
-                    exit;
-                } else {
-                    $errors[] = "Error while creating course (maybe duplicate name).";
-                }
-                mysqli_stmt_close($stmt);
+            $newId = $courseModel->createCourseWithAdmin($name, $description, $currentAdminId, $programmeId);
+            
+            if ($newId) {
+                $courseId = $newId;
+                $success = "Course created successfully.";
+                // redirect alla pagina di edit per evitare resubmit
+                header("Location: index.php?page=admin-course-edit&id=" . $courseId);
+                exit;
             } else {
-                $errors[] = "Internal error while preparing the query.";
+                $errors[] = "Error while creating course (maybe duplicate name).";
             }
         }
 
@@ -106,19 +74,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($errors)) {
-            $sql = "INSERT INTO course_offering (year, semester, course_id) VALUES (?, ?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            if ($stmt) {
-                mysqli_stmt_bind_param($stmt, "isi", $year, $semester, $courseId);
-                if (mysqli_stmt_execute($stmt)) {
-                    $success = "Course offering added.";
-                } else {
-                    // Probabile violazione unique (course_id, year, semester)
-                    $errors[] = "Could not add offering. Maybe this year/semester already exists for this course.";
-                }
-                mysqli_stmt_close($stmt);
+            $success = $courseModel->addCourseOffering($year, $semester, $courseId);
+            
+            if ($success) {
+                $success = "Course offering added.";
             } else {
-                $errors[] = "Internal error while preparing the query.";
+                // Probabile violazione unique (course_id, year, semester)
+                $errors[] = "Could not add offering. Maybe this year/semester already exists for this course.";
             }
         }
 
@@ -132,19 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         if (empty($errors)) {
-            $sql = "INSERT IGNORE INTO course_offering_teacher (offering_id, teacher_id)
-                    VALUES (?, ?)";
-            $stmt = mysqli_prepare($conn, $sql);
-            if ($stmt) {
-                mysqli_stmt_bind_param($stmt, "ii", $offeringId, $teacherId);
-                if (mysqli_stmt_execute($stmt)) {
-                    $success = "Teacher linked to the offering.";
-                } else {
-                    $errors[] = "Could not link teacher to offering.";
-                }
-                mysqli_stmt_close($stmt);
+            $success = $courseModel->linkTeacherToOffering($offeringId, $teacherId);
+            
+            if ($success) {
+                $success = "Teacher linked to the offering.";
             } else {
-                $errors[] = "Internal error while preparing the query.";
+                $errors[] = "Could not link teacher to offering.";
             }
         }
 
@@ -159,54 +114,11 @@ $course = null;
 $offerings = [];
 
 if ($courseId) {
-    $sql = "
-        SELECT 
-            c.id,
-            c.name,
-            c.description,
-            c.programme_id,
-            c.created_at
-        FROM course c
-        WHERE c.id = ?
-        LIMIT 1
-    ";
-    $stmt = mysqli_prepare($conn, $sql);
-    if ($stmt) {
-        mysqli_stmt_bind_param($stmt, "i", $courseId);
-        mysqli_stmt_execute($stmt);
-        $res = mysqli_stmt_get_result($stmt);
-        $course = mysqli_fetch_assoc($res);
-        mysqli_stmt_close($stmt);
-    }
+    $course = $courseModel->getCourseDetails($courseId);
 
     if ($course) {
         // Offerte del corso + docenti + numero follower
-        $sqlOff = "
-            SELECT
-                co.id,
-                co.year,
-                co.semester,
-                GROUP_CONCAT(DISTINCT CONCAT(p_t.name, ' ', p_t.surname) ORDER BY p_t.surname SEPARATOR ', ') AS teacher_names,
-                COUNT(DISTINCT cof.user_id) AS follower_count
-            FROM course_offering co
-            LEFT JOIN course_offering_teacher cot ON cot.offering_id = co.id
-            LEFT JOIN teacher t ON t.person_id = cot.teacher_id
-            LEFT JOIN person p_t ON p_t.id = t.person_id
-            LEFT JOIN course_offering_follow cof ON cof.offering_id = co.id
-            WHERE co.course_id = ?
-            GROUP BY co.id, co.year, co.semester
-            ORDER BY co.year DESC, co.semester DESC
-        ";
-        $stmtOff = mysqli_prepare($conn, $sqlOff);
-        if ($stmtOff) {
-            mysqli_stmt_bind_param($stmtOff, "i", $courseId);
-            mysqli_stmt_execute($stmtOff);
-            $resOff = mysqli_stmt_get_result($stmtOff);
-            while ($row = mysqli_fetch_assoc($resOff)) {
-                $offerings[] = $row;
-            }
-            mysqli_stmt_close($stmtOff);
-        }
+        $offerings = $courseModel->getCourseOfferingsWithDetails($courseId);
     }
 }
 
@@ -347,8 +259,7 @@ function findProgrammeName($programmes, $id) {
                             <p class="text-muted small">No offerings yet for this course.</p>
                         <?php else: ?>
                             <div class="table-responsive mb-4">
-                                <table class="table table-sm align-middle">
-                                    <thead class="table-light">
+                                <table class="table table-sm align-middle">                                    <caption class="visually-hidden">List of course offerings with year, semester, teachers and actions</caption>                                    <thead class="table-light">
                                         <tr>
                                             <th>Year</th>
                                             <th>Semester</th>
@@ -371,26 +282,7 @@ function findProgrammeName($programmes, $id) {
 
                                                     <?php
                                                     // Lista dettagliata follower
-                                                    $followers = [];
-                                                    $sqlFol = "
-                                                        SELECT p.name, p.surname, p.email
-                                                        FROM course_offering_follow cof
-                                                        JOIN user u ON u.person_id = cof.user_id
-                                                        JOIN person p ON p.id = u.person_id
-                                                        WHERE cof.offering_id = ?
-                                                        ORDER BY p.surname, p.name
-                                                    ";
-                                                    $stmtFol = mysqli_prepare($conn, $sqlFol);
-                                                    if ($stmtFol) {
-                                                        $oid = (int)$off['id'];
-                                                        mysqli_stmt_bind_param($stmtFol, "i", $oid);
-                                                        mysqli_stmt_execute($stmtFol);
-                                                        $resFol = mysqli_stmt_get_result($stmtFol);
-                                                        while ($rowF = mysqli_fetch_assoc($resFol)) {
-                                                            $followers[] = $rowF;
-                                                        }
-                                                        mysqli_stmt_close($stmtFol);
-                                                    }
+                                                    $followers = $courseModel->getOfferingFollowers((int)$off['id']);
                                                     ?>
 
                                                     <?php if (!empty($followers)): ?>

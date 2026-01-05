@@ -11,28 +11,8 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
 }
 
 // Query: corsi + numero offerte + numero note
-$sql = "
-    SELECT 
-        c.id,
-        c.name,
-        c.description,
-        COUNT(DISTINCT co.id) AS offering_count,
-        COUNT(DISTINCT n.id)  AS note_count
-    FROM course c
-    LEFT JOIN course_offering co ON co.course_id = c.id
-    LEFT JOIN topic t            ON t.offering_id = co.id
-    LEFT JOIN note n             ON n.topic_id = t.id
-    GROUP BY c.id, c.name, c.description
-    ORDER BY c.name
-";
-
-$result = mysqli_query($conn, $sql);
-$courses = [];
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $courses[] = $row;
-    }
-}
+$courseModel = new CourseModel();
+$courses = $courseModel->getCoursesForManagement();
 ?>
 
 <div class="container py-4 py-lg-5">
@@ -51,6 +31,7 @@ if ($result) {
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
+                                <caption class="visually-hidden">List of courses with name, code, programme and actions</caption>
                                 <thead class="table-light">
                                     <tr>
                                         <th>Course</th>

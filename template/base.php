@@ -7,7 +7,7 @@ $profilePage = 'account';
 
 ?>
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -50,6 +50,11 @@ $profilePage = 'account';
                 <li class="nav-item">
                     <a class="nav-link <?php echo $currentPage === 'note_edit' ? 'active' : ''; ?>" href="index.php?page=note_edit" <?php echo $currentPage === 'note_edit' ? 'aria-current="page"' : ''; ?>>
                         Create Note
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <?php echo $currentPage === 'user_notes_uploaded' ? 'active' : ''; ?>" href="index.php?page=user_notes_uploaded" <?php echo $currentPage === 'user_notes_uploaded' ? 'aria-current="page"' : ''; ?>>
+                        My Notes
                     </a>
                 </li>
                 <li class="nav-item">

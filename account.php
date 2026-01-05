@@ -55,10 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
                     // salva solo il percorso (senza query) nel DB
                     $dbPath = 'uploads/profile/' . $newName;
 
-                    $uStmt = mysqli_prepare($conn, "UPDATE person SET profile_picture = ? WHERE id = ?");
-                    mysqli_stmt_bind_param($uStmt, "si", $dbPath, $personId);
-                    mysqli_stmt_execute($uStmt);
-                    mysqli_stmt_close($uStmt);
+                    $personModel = new PersonModel();
+                    $personModel->updateProfilePicture($personId, $dbPath);
 
                     // imposta la variabile per il preview locale con bust di cache
                     $profilePicture = $dbPath . '?v=' . time();
@@ -72,17 +70,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
     }
 
     // --- AGGIORNA CAMPI DI PROFILO (user) ---
-    $updateSql = "UPDATE user SET programme = ?, bio = ? WHERE person_id = ?";
-    $updateStmt = mysqli_prepare($conn, $updateSql);
-    mysqli_stmt_bind_param($updateStmt, "ssi", $programme, $bio, $personId);
+    $userModel = new UserModel();
+    $success = $userModel->updateUserProfile($personId, $programme, $bio);
 
-    if (mysqli_stmt_execute($updateStmt)) {
+    if ($success) {
         $updateMessage = ($updateMessage ?? '') . '<div id="serverMessage" class="alert alert-success mb-3" role="status" aria-live="polite">Profile updated successfully.</div>';
     } else {
         $updateMessage = ($updateMessage ?? '') . '<div id="serverMessage" class="alert alert-danger mb-3" role="alert" aria-live="polite">Error while updating profile.</div>';
     }
-
-    mysqli_stmt_close($updateStmt);
 }
 
 
@@ -90,29 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $mode === 'user') {
 // -------------------------
 // 1) Dati utente (comune ad admin e user)
 // -------------------------
-$sql = "
-    SELECT 
-        p.name,
-        p.surname,
-        p.email,
-        p.profile_picture,
-        u.created_at,
-        u.programme,
-        u.bio,
-        u.role,
-        u.last_login
-    FROM person p
-    JOIN user u ON p.id = u.person_id
-    WHERE p.id = ?
-    LIMIT 1
-";
+$personModel = new PersonModel();
+$userModel = new UserModel();
 
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $personId);
-mysqli_stmt_execute($stmt);
-$result   = mysqli_stmt_get_result($stmt);
-$userData = mysqli_fetch_assoc($result);
-mysqli_stmt_close($stmt);
+$userData = $personModel->getPersonWithUserData($personId);
 
 if (!$userData) {
     header('Location: logout.php');
@@ -161,47 +137,26 @@ $stats = [
 ];
 
 $activity = [
-    'uploaded'   => 0,
+    'notes'   => 0,
     'upvoted' => 0,
 ];
 
-// NOTE CARICATE (upload)
-$uploadSql = "SELECT COUNT(*) AS c FROM note WHERE owner_id = ?";
-$uploadStmt = mysqli_prepare($conn, $uploadSql);
-mysqli_stmt_bind_param($uploadStmt, "i", $personId);
-mysqli_stmt_execute($uploadStmt);
-$uploadRes = mysqli_stmt_get_result($uploadStmt);
-if ($uploadRow = mysqli_fetch_assoc($uploadRes)) {
-    $activity["uploaded"] = (int)$uploadRow["c"];
-}
-mysqli_stmt_close($uploadStmt);
-
+// NOTE CARICATE (tutte: draft + pubblicate)
+$noteModel = new NoteModel();
+$activity["notes"] = $noteModel->countNotesByOwner($personId);
 
 // NOTE UPVOTATE (upvote = 1 nella tabella vote)
-$upvoteSql = "SELECT COUNT(DISTINCT note_id) AS c FROM vote WHERE user_id = ? AND vote = 1";
-$upvoteStmt = mysqli_prepare($conn, $upvoteSql);
-mysqli_stmt_bind_param($upvoteStmt, "i", $personId);
-mysqli_stmt_execute($upvoteStmt);
-$upvoteRes = mysqli_stmt_get_result($upvoteStmt);
-if ($upvoteRow = mysqli_fetch_assoc($upvoteRes)) {
-    $activity["upvoted"] = (int)$upvoteRow["c"];
-}
-mysqli_stmt_close($upvoteStmt);
+$voteModel = new VoteModel();
+$activity["upvoted"] = $voteModel->countUpvotedNotesByUser($personId);
 
 
 
 if ($mode === 'admin') {
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM user");
-    if ($res) $stats['users'] = (int)mysqli_fetch_assoc($res)['c'];
-
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM course");
-    if ($res) $stats['courses'] = (int)mysqli_fetch_assoc($res)['c'];
-
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM note");
-    if ($res) $stats['notes'] = (int)mysqli_fetch_assoc($res)['c'];
-
-    $res = mysqli_query($conn, "SELECT COUNT(*) AS c FROM correction WHERE resolved = 0");
-    if ($res) $stats['corrections'] = (int)mysqli_fetch_assoc($res)['c'];
+    $adminModel = new AdminModel();
+    $stats['users'] = $adminModel->countUsers();
+    $stats['courses'] = $adminModel->countCourses();
+    $stats['notes'] = $adminModel->countNotes();
+    $stats['corrections'] = $adminModel->countUnresolvedCorrections();
 }
 
 
@@ -209,18 +164,8 @@ if ($mode === 'admin') {
 $userId = (int)$_SESSION['person_id'];
 
 // Check teacher status (pending vs confirmed)
-$sql = "
-    SELECT department, unibo_site, phone_number, personal_site
-    FROM teacher
-    WHERE person_id = ?
-    LIMIT 1
-";
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $userId);
-mysqli_stmt_execute($stmt);
-$res   = mysqli_stmt_get_result($stmt);
-$row   = mysqli_fetch_assoc($res);
-mysqli_stmt_close($stmt);
+$teacherModel = new TeacherModel();
+$row = $teacherModel->getTeacherByPersonId($userId);
 
 $hasTeacherRow      = (bool)$row;
 $isTeacherConfirmed = false; // default
@@ -244,20 +189,12 @@ $hasTeacherRequest = $hasTeacherRow && !$isTeacherConfirmed;
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
 
     // Check if a teacher row already exists (prevent duplication)
-    $sqlCheck = "SELECT person_id FROM teacher WHERE person_id = ?";
-    $stmtC = mysqli_prepare($conn, $sqlCheck);
-    mysqli_stmt_bind_param($stmtC, "i", $userId);
-    mysqli_stmt_execute($stmtC);
-    $exists = mysqli_stmt_get_result($stmtC)->num_rows > 0;
-    mysqli_stmt_close($stmtC);
+    $teacherModel = new TeacherModel();
+    $exists = $teacherModel->teacherExists($userId);
 
     if (!$exists) {
         // Insert an empty teacher row → marks as PENDING
-        $sqlInsert = "INSERT INTO teacher (person_id) VALUES (?)";
-        $stmt = mysqli_prepare($conn, $sqlInsert);
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $teacherModel->createTeacherRequest($userId);
     }
 
     // PRG redirect
@@ -460,9 +397,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['request_teacher'])) {
                             class="text-decoration-none text-reset">
                                 <div class="border rounded-4 py-4 px-3 text-center bg-light hover-shadow">
                                     <div class="fs-2 mb-2">📘</div>
-                                    <div class="fw-semibold">Notes Uploaded</div>
+                                    <div class="fw-semibold">My Notes</div>
                                     <div class="text-muted small">
-                                        <?php echo (int)$activity['uploaded']; ?>
+                                        <?php echo (int)$activity['notes']; ?>
                                     </div>
                                 </div>
                             </a>

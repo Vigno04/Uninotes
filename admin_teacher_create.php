@@ -7,6 +7,7 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
+$teacherModel = new TeacherModel();
 $errors  = [];
 $success = "";
 
@@ -37,108 +38,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     if (empty($errors)) {
-        // 1) Check if email already exists in person
-        $sqlCheck = "SELECT id FROM person WHERE email = ? LIMIT 1";
-        $stmtCheck = mysqli_prepare($conn, $sqlCheck);
-        if ($stmtCheck) {
-            mysqli_stmt_bind_param($stmtCheck, "s", $email);
-            mysqli_stmt_execute($stmtCheck);
-            $resCheck = mysqli_stmt_get_result($stmtCheck);
-            $existingPerson = mysqli_fetch_assoc($resCheck);
-            mysqli_stmt_close($stmtCheck);
-        } else {
-            $existingPerson = null;
-        }
+        // Check if email already exists in person
+        $existingPerson = $teacherModel->personExistsByEmail($email);
 
         if ($existingPerson) {
-            // If person exists, check if already a teacher
             $personId = (int)$existingPerson['id'];
 
-            $sqlCheckTeacher = "SELECT person_id FROM teacher WHERE person_id = ? LIMIT 1";
-            $stmtCT = mysqli_prepare($conn, $sqlCheckTeacher);
-            if ($stmtCT) {
-                mysqli_stmt_bind_param($stmtCT, "i", $personId);
-                mysqli_stmt_execute($stmtCT);
-                $resCT = mysqli_stmt_get_result($stmtCT);
-                $existingTeacher = mysqli_fetch_assoc($resCT);
-                mysqli_stmt_close($stmtCT);
-            } else {
-                $existingTeacher = null;
-            }
-
-            if ($existingTeacher) {
+            // Check if already a teacher
+            if ($teacherModel->isTeacher($personId)) {
                 $errors[] = "This email already belongs to an existing teacher.";
             } else {
                 // Turn this existing person into a teacher
-                $sqlInsertTeacher = "
-                    INSERT INTO teacher (person_id, department, unibo_site, phone_number, personal_site)
-                    VALUES (?, ?, ?, ?, ?)
-                ";
-                $stmtT = mysqli_prepare($conn, $sqlInsertTeacher);
-                if ($stmtT) {
-                    mysqli_stmt_bind_param($stmtT, "issss",
-                        $personId,
-                        $department,
-                        $unibo_site,
-                        $phone_number,
-                        $personal_site
-                    );
-                    if (mysqli_stmt_execute($stmtT)) {
-                        $success = "Teacher created from existing person.";
-                    } else {
-                        $errors[] = "Error while inserting teacher record.";
-                    }
-                    mysqli_stmt_close($stmtT);
+                if ($teacherModel->addExistingAsTeacher($personId)) {
+                    $success = "Teacher created from existing person.";
                 } else {
-                    $errors[] = "Internal error while preparing teacher insert.";
+                    $errors[] = "Error while inserting teacher record.";
                 }
             }
         } else {
-            // 2) Insert new person, then teacher
-            mysqli_begin_transaction($conn);
-            try {
-                // Insert person
-                $sqlPerson = "INSERT INTO person (name, surname, email) VALUES (?, ?, ?)";
-                $stmtP = mysqli_prepare($conn, $sqlPerson);
-                if (!$stmtP) {
-                    throw new Exception("Error preparing person insert.");
-                }
-                mysqli_stmt_bind_param($stmtP, "sss", $name, $surname, $email);
-                if (!mysqli_stmt_execute($stmtP)) {
-                    throw new Exception("Error executing person insert (maybe email already in use).");
-                }
-                $personId = mysqli_insert_id($conn);
-                mysqli_stmt_close($stmtP);
-
-                // Insert teacher
-                $sqlTeacher = "
-                    INSERT INTO teacher (person_id, department, unibo_site, phone_number, personal_site)
-                    VALUES (?, ?, ?, ?, ?)
-                ";
-                $stmtT = mysqli_prepare($conn, $sqlTeacher);
-                if (!$stmtT) {
-                    throw new Exception("Error preparing teacher insert.");
-                }
-                mysqli_stmt_bind_param($stmtT, "issss",
-                    $personId,
-                    $department,
-                    $unibo_site,
-                    $phone_number,
-                    $personal_site
-                );
-                if (!mysqli_stmt_execute($stmtT)) {
-                    throw new Exception("Error executing teacher insert.");
-                }
-                mysqli_stmt_close($stmtT);
-
-                mysqli_commit($conn);
+            // Insert new person, then teacher
+            $personId = $teacherModel->createTeacher($name, $surname, $email);
+            
+            if ($personId) {
                 $success = "Teacher created successfully.";
                 // Clear form fields after success
                 $name = $surname = $email = $department = $unibo_site = $phone_number = $personal_site = "";
-
-            } catch (Exception $e) {
-                mysqli_rollback($conn);
-                $errors[] = $e->getMessage();
+            } else {
+                $errors[] = "Error creating teacher.";
             }
         }
     }
@@ -148,25 +74,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // 2) List existing teachers
 // ============================
 
-$teachers = [];
-$sqlList = "
-    SELECT 
-        t.person_id,
-        p.name,
-        p.surname,
-        p.email,
-        t.department,
-        t.unibo_site
-    FROM teacher t
-    JOIN person p ON p.id = t.person_id
-    ORDER BY p.surname, p.name
-";
-$resList = mysqli_query($conn, $sqlList);
-if ($resList) {
-    while ($row = mysqli_fetch_assoc($resList)) {
-        $teachers[] = $row;
-    }
-}
+$teachers = $teacherModel->getAllTeachers();
 
 ?>
 
@@ -302,6 +210,7 @@ if ($resList) {
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
+                                <caption class="visually-hidden">List of all teachers with name, email, status and actions</caption>
                                 <thead class="table-light">
                                     <tr>
                                         <th>Name</th>

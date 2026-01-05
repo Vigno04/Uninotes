@@ -89,5 +89,13 @@ class UserModel {
         $stmt = $this->pdo->prepare("UPDATE user SET last_login = NOW() WHERE person_id = ?");
         return $stmt->execute([$personId]);
     }
+
+    /**
+     * Update user profile (programme and bio)
+     */
+    public function updateUserProfile(int $personId, string $programme, string $bio): bool {
+        $stmt = $this->pdo->prepare("UPDATE user SET programme = ?, bio = ? WHERE person_id = ?");
+        return $stmt->execute([$programme, $bio, $personId]);
+    }
 }
 ?>

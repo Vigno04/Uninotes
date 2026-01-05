@@ -19,7 +19,7 @@ if (!$file) {
 }
 
 // Permission check: Allow if note is published OR user is the owner
-$userId = $_SESSION['user_id'] ?? null;
+$userId = $_SESSION['person_id'] ?? null;
 if ($file['status'] !== 'published' && $file['owner_id'] != $userId) {
     http_response_code(403);
     exit("Access denied");

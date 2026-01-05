@@ -8,6 +8,7 @@ if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
     exit;
 }
 
+$adminModel = new AdminModel();
 $currentAdminId = (int)$_SESSION['person_id'];
 
 // --- GESTIONE AZIONI POST (role, attiva/disattiva) ---
@@ -19,26 +20,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['use
     $isSelf = ($userId === $currentAdminId);
 
     if ($action === 'make_admin' && !$isSelf) {
-        $stmt = mysqli_prepare($conn, "UPDATE user SET role = 'admin' WHERE person_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $adminModel->promoteToAdmin($userId);
     } elseif ($action === 'make_user' && !$isSelf) {
-        $stmt = mysqli_prepare($conn, "UPDATE user SET role = 'user' WHERE person_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $adminModel->demoteToUser($userId);
     } elseif ($action === 'deactivate' && !$isSelf) {
-        $stmt = mysqli_prepare($conn, "UPDATE user SET deleted_at = NOW() WHERE person_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $adminModel->deleteUser($userId);
     } elseif ($action === 'reactivate') {
-        // Riattivare se stessi va bene (es. in futuro con più admin)
-        $stmt = mysqli_prepare($conn, "UPDATE user SET deleted_at = NULL WHERE person_id = ?");
-        mysqli_stmt_bind_param($stmt, "i", $userId);
-        mysqli_stmt_execute($stmt);
-        mysqli_stmt_close($stmt);
+        $adminModel->restoreUser($userId);
     }
 
     // PRG pattern: redirect dopo il POST
@@ -48,98 +36,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'], $_POST['use
 
 // --- RICERCA SEMPLICE ---
 $search = trim($_GET['q'] ?? '');
+$roleFilter = $_GET['role'] ?? null;
+$showDeleted = isset($_GET['show_deleted']);
 
-$params = [];
-$where  = '';
-if ($search !== '') {
-    $where = "WHERE (p.name LIKE ? OR p.surname LIKE ? OR p.email LIKE ?)";
-    $like  = '%' . $search . '%';
-    $params = [$like, $like, $like];
-}
-
-$sql = "
-    SELECT 
-        p.id,
-        p.name,
-        p.surname,
-        p.email,
-        u.role,
-        u.created_at AS user_created,
-        u.last_login,
-        u.deleted_at,
-        COUNT(n.id) AS note_count,
-
-        -- Teacher info (aggregated)
-        MAX(t.person_id)      AS teacher_person_id,
-        MAX(t.department)     AS teacher_department,
-        MAX(t.unibo_site)     AS teacher_unibo_site,
-        MAX(t.phone_number)   AS teacher_phone_number,
-        MAX(t.personal_site)  AS teacher_personal_site
-
-    FROM person p
-    JOIN user u ON p.id = u.person_id
-    LEFT JOIN note n    ON n.owner_id = u.person_id
-    LEFT JOIN teacher t ON t.person_id = u.person_id
-    $where
-    GROUP BY 
-        p.id, p.name, p.surname, p.email,
-        u.role, u.created_at, u.last_login, u.deleted_at
-    ORDER BY 
-        (u.role = 'admin') DESC,
-        p.surname,
-        p.name
-";
-
-
-if ($where !== '') {
-    $stmt = mysqli_prepare($conn, $sql);
-    mysqli_stmt_bind_param($stmt, "sss", ...$params);
-    mysqli_stmt_execute($stmt);
-    $result = mysqli_stmt_get_result($stmt);
-} else {
-    $result = mysqli_query($conn, $sql);
-}
-
-$users = [];
-if ($result) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        $users[] = $row;
-    }
-}
-
-// Fetch pending teacher requests
-// ----- Teacher request status for this user -----
-$isTeacher         = false;
-$isTeacherPending  = false;
-
-$sqlT = "
-    SELECT department, unibo_site, phone_number, personal_site
-    FROM teacher
-    WHERE person_id = ?
-    LIMIT 1
-";
-
-$stmtT = mysqli_prepare($conn, $sqlT);
-if ($stmtT) {
-    mysqli_stmt_bind_param($stmtT, "i", $personId);
-    mysqli_stmt_execute($stmtT);
-    $resT = mysqli_stmt_get_result($stmtT);
-    if ($rowT = mysqli_fetch_assoc($resT)) {
-        // row exists → either pending or full teacher
-        $allNull =
-            is_null($rowT['department']) &&
-            is_null($rowT['unibo_site']) &&
-            is_null($rowT['phone_number']) &&
-            is_null($rowT['personal_site']);
-
-        if ($allNull) {
-            $isTeacherPending = true;   // request sent, waiting for admin
-        } else {
-            $isTeacher = true;          // already a full teacher
-        }
-    }
-    mysqli_stmt_close($stmtT);
-}
+$users = $adminModel->getAllUsers($search, $roleFilter, $showDeleted);
 
 ?>
 
@@ -184,6 +84,7 @@ if ($stmtT) {
                     <?php else: ?>
                         <div class="table-responsive">
                             <table class="table table-sm align-middle">
+                                <caption class="visually-hidden">List of all users with name, email, role, status and actions</caption>
                                 <thead class="table-light">
                                     <tr>
                                         <th>Name</th>

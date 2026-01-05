@@ -10,67 +10,82 @@ if (!isset($_SESSION['person_id'])) {
 
 $personId = (int)$_SESSION['person_id'];
 
-$sql = "
-    SELECT
-        n.id,
-        n.title,
-        COALESCE(n.published_at, n.created_at) AS note_date,
-        c.name AS course_name,
-        n.vote_count
-    FROM note n
-    JOIN topic t ON n.topic_id = t.id
-    JOIN course_offering co ON t.offering_id = co.id
-    JOIN course c ON co.course_id = c.id
-    WHERE n.owner_id = ?
-    ORDER BY note_date DESC
-";
-
-$stmt = mysqli_prepare($conn, $sql);
-mysqli_stmt_bind_param($stmt, "i", $personId);
-mysqli_stmt_execute($stmt);
-$res = mysqli_stmt_get_result($stmt);
-
-$notes = [];
-while ($row = mysqli_fetch_assoc($res)) {
-    $notes[] = $row;
-}
-mysqli_stmt_close($stmt);
+$noteModel = new NoteModel();
+$notes = $noteModel->getNotesUploadedByUser($personId);
 ?>
 
 <div class="container py-4 py-lg-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h1 class="h4 mb-1">Your Uploads</h1>
+            <h1 class="h4 mb-1">My Notes</h1>
             <p class="text-muted small mb-0">
-                All notes you have uploaded.
+                All your notes: drafts and published.
             </p>
         </div>
-        <a class="nav-link <?php echo $currentPage === 'account' ? 'active' : ''; ?>"
-            href="index.php?page=<?php echo $profilePage; ?>">
-            ← Back to profile
+        <a class="btn btn-outline-secondary btn-sm" href="index.php?page=account">
+            <i class="bi bi-arrow-left me-1"></i> Back to Profile
         </a>
     </div>
 
     <?php if (empty($notes)): ?>
-        <p class="text-muted">You haven't uploaded any notes yet.</p>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-file-earmark-text text-muted" style="font-size: 3rem;"></i>
+                <p class="text-muted mt-3 mb-0">You haven't uploaded any notes yet.</p>
+                <a href="index.php?page=note_edit" class="btn btn-primary mt-3">
+                    <i class="bi bi-plus-lg me-1"></i> Create Note
+                </a>
+            </div>
+        </div>
     <?php else: ?>
         <?php foreach ($notes as $note): ?>
-            <div class="card mb-3 border-0 shadow-sm rounded-4">
-                <div class="card-body d-flex justify-content-between align-items-center">
-                    <div>
-                        <a href="index.php?page=note_view&id=<?php echo (int)$note['id']; ?>"
-                           class="text-decoration-none">
-                            <h2 class="h6 mb-1">
-                                <?php echo htmlspecialchars($note['title']); ?>
-                            </h2>
-                        </a>
-                        <div class="small text-muted">
-                            <?php echo htmlspecialchars($note['course_name']); ?> ·
-                            <?php echo date('d M Y', strtotime($note['note_date'])); ?>
+            <div class="card mb-3 border-0 shadow-sm">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+                        <div class="flex-grow-1">
+                            <div class="d-flex align-items-center gap-2 mb-2">
+                                <?php if ($note['status'] === 'draft'): ?>
+                                    <span class="badge bg-secondary">
+                                        <i class="bi bi-file-earmark me-1"></i>Draft
+                                    </span>
+                                <?php else: ?>
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Published
+                                    </span>
+                                <?php endif; ?>
+                                <small class="text-muted">
+                                    <?php echo date('d M Y', strtotime($note['note_date'])); ?>
+                                </small>
+                            </div>
+                            <a href="index.php?page=note_view&id=<?php echo (int)$note['id']; ?>"
+                               class="text-decoration-none">
+                                <h2 class="h5 mb-1">
+                                    <?php echo htmlspecialchars($note['title']); ?>
+                                </h2>
+                            </a>
+                            <div class="small text-muted">
+                                <i class="bi bi-book me-1"></i>
+                                <?php echo htmlspecialchars($note['course_name']); ?>
+                            </div>
                         </div>
-                    </div>
-                    <div class="small text-muted">
-                        👍 <?php echo (int)$note['vote_count']; ?>
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-center">
+                                <i class="bi bi-hand-thumbs-up text-primary"></i>
+                                <div class="small text-muted"><?php echo (int)$note['vote_count']; ?></div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <a href="index.php?page=note_edit&id=<?php echo (int)$note['id']; ?>" 
+                                   class="btn btn-outline-primary btn-sm"
+                                   title="Edit note">
+                                    <i class="bi bi-pencil"></i> Edit
+                                </a>
+                                <a href="index.php?page=note_view&id=<?php echo (int)$note['id']; ?>" 
+                                   class="btn btn-outline-secondary btn-sm"
+                                   title="View note">
+                                    <i class="bi bi-eye"></i> View
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

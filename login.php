@@ -21,33 +21,35 @@ if ($_SESSION['login_attempts'] >= $maxAttempts && ($currentTime - $_SESSION['la
     $email    = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if ($email === '' || $password === '') {
-        $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci email e password.</div>';
-    } else {
-        $userModel = new UserModel();
-        $user = $userModel->authenticate($email, $password);
-
-        if ($user) {
-            // Login OK
-            $_SESSION["person_id"] = $user["person_id"];
-            $_SESSION["name"]      = $user["name"];
-            $_SESSION["surname"]   = $user["surname"];
-            $_SESSION["email"]     = $user["email"];
-            $_SESSION["role"]      = $user["role"];
-
-            // Update last_login
-            $userModel->updateLastLogin($user["person_id"]);
-
-            // Reset attempts on success
-            $_SESSION['login_attempts'] = 0;
-
-            header("Location: index.php?page=home");
-            exit();
+        if ($email === '' || $password === '') {
+            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Inserisci email e password.</div>';
         } else {
-            // Se qualcosa va storto
-            $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Wrong email or password.</div>';
+            $userModel = new UserModel();
+            $user = $userModel->authenticate($email, $password);
+
+            if ($user) {
+                // Login OK
+                $_SESSION["person_id"] = $user["person_id"];
+                $_SESSION["name"]      = $user["name"];
+                $_SESSION["surname"]   = $user["surname"];
+                $_SESSION["email"]     = $user["email"];
+                $_SESSION["role"]      = $user["role"];
+
+                // Update last_login
+                $userModel->updateLastLogin($user["person_id"]);
+
+                // Reset attempts on success
+                $_SESSION['login_attempts'] = 0;
+
+                header("Location: index.php?page=home");
+                exit();
+            } else {
+                // Login fallito - incrementa attempts
+                $_SESSION['login_attempts']++;
+                $_SESSION['last_attempt'] = $currentTime;
+                $message = '<div id="serverMessage" class="alert alert-danger" role="alert" aria-live="polite">Wrong email or password.</div>';
+            }
         }
-    }
 }
 ?>
 <!DOCTYPE html>
@@ -78,7 +80,8 @@ if ($_SESSION['login_attempts'] >= $maxAttempts && ($currentTime - $_SESSION['la
                 <p class="auth-subheading mb-0">Enter your credentials to access your notes</p>
             </div>
             <?= $message ?>
-            <form action="" method="POST" class="mb-3"> <!-- TODO: Forse si deve aggiungere un'action, magari authenticate.php -->
+            <?php echo getCSRFField(); ?>
+            <form action="" method="POST" class="mb-3">
                 <div class="mb-3">
                     <label for="login-email" class="form-label small mb-1">Email</label>
                     <input id="login-email" type="email" name="email" class="form-control" placeholder="student@university.edu" required autofocus aria-describedby="serverMessage">

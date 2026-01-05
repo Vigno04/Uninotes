@@ -39,23 +39,8 @@ $limit        = isset($_GET['limit']) ? max($defaultLimit, (int)$_GET['limit']) 
 // -------------------------
 $offeringInfo = null;
 if (!is_null($offeringFilter)) {
-    $sqlOfferingInfo = "
-        SELECT 
-            c.name AS course_name,
-            co.year,
-            co.semester
-        FROM course_offering co
-        JOIN course c ON co.course_id = c.id
-        WHERE co.id = ?
-    ";
-    $stmtInfo = mysqli_prepare($conn, $sqlOfferingInfo);
-    if ($stmtInfo) {
-        mysqli_stmt_bind_param($stmtInfo, "i", $offeringFilter);
-        mysqli_stmt_execute($stmtInfo);
-        $resInfo = mysqli_stmt_get_result($stmtInfo);
-        $offeringInfo = mysqli_fetch_assoc($resInfo);
-        mysqli_stmt_close($stmtInfo);
-    }
+    $noteModel = new NoteModel();
+    $offeringInfo = $noteModel->getOfferingInfo($offeringFilter);
 }
 
 // -------------------------
@@ -64,79 +49,23 @@ if (!is_null($offeringFilter)) {
 $allOfferingOptions = [];
 
 if ($currentUserId !== null) {
-    // Offerings seguiti dall'utente
-    $sqlOfferings = "
-        SELECT 
-            co.id,
-            c.name AS course_name,
-            co.year,
-            co.semester
-        FROM course_offering_follow cof
-        JOIN course_offering co ON cof.offering_id = co.id
-        JOIN course c ON co.course_id = c.id
-        WHERE cof.user_id = ?
-        ORDER BY c.name, co.year DESC, co.semester DESC
-    ";
-    $stmtOff = mysqli_prepare($conn, $sqlOfferings);
-    if ($stmtOff) {
-        mysqli_stmt_bind_param($stmtOff, "i", $currentUserId);
-        mysqli_stmt_execute($stmtOff);
-        $resOff = mysqli_stmt_get_result($stmtOff);
-        while ($row = mysqli_fetch_assoc($resOff)) {
-            $semesterLabel = $row['semester'] === '1' ? '1st' : '2nd';
-            $row['display_name'] = $row['course_name'] . ' (' . $row['year'] . ' - ' . $semesterLabel . ' Sem)';
-            $allOfferingOptions[] = $row;
-        }
-        mysqli_stmt_close($stmtOff);
+    $courseModel = new CourseModel();
+    $allOfferingOptions = $courseModel->getUserFollowedOfferingsForHome($currentUserId);
+    
+    // Add display_name to each offering
+    foreach ($allOfferingOptions as &$row) {
+        $semesterLabel = $row['semester'] === '1' ? '1st' : '2nd';
+        $row['display_name'] = $row['course_name'] . ' (' . $row['year'] . ' - ' . $semesterLabel . ' Sem)';
     }
+    unset($row);
 }
 
 
 // -------------------------
-// 2) Costruisco la query base (senza LIMIT)
+// 2) Costruisco la query base (senza LIMIT) e ottengo note filtrate
 // -------------------------
-$conditions = ["n.status = 'published'"];
-$params = [];
-$types  = "";
-
-// filtro offering specifico
-if (!is_null($offeringFilter)) {
-    $conditions[] = "co.id = ?";
-    $types       .= "i";
-    $params[]     = $offeringFilter;
-}
-
-// filtro "My courses" → note dei course offerings seguiti
-if ($filterMyCourses && $currentUserId !== null) {
-    $conditions[] = "EXISTS (
-        SELECT 1
-        FROM course_offering_follow cof
-        WHERE cof.offering_id = co.id
-          AND cof.user_id = ?
-    )";
-    $types   .= "i";
-    $params[] = $currentUserId;
-}
-
-
-// filtro testo
-if ($searchTerm !== '') {
-    $conditions[] = "(n.title LIKE ? OR n.content LIKE ?)";
-    $like = '%' . $searchTerm . '%';
-    $types  .= "ss";
-    $params[] = $like;
-    $params[] = $like;
-}
-
-$whereClause = "";
-if (!empty($conditions)) {
-    $whereClause = "WHERE " . implode(" AND ", $conditions);
-}
-
-// sort
-$orderBy = "note_date DESC";
-if ($sort === 'votes') {
-    $orderBy = "n.vote_count DESC, note_date DESC";
+if (!isset($noteModel)) {
+    $noteModel = new NoteModel();
 }
 
 // -------------------------
@@ -145,112 +74,40 @@ if ($sort === 'votes') {
 $totalResults = 0;
 
 if ($searchTerm !== '' || !is_null($offeringFilter) || $filterMyCourses) {
-
-    $sqlCount = "
-        SELECT COUNT(DISTINCT n.id) AS total
-        FROM note n
-        JOIN topic t ON n.topic_id = t.id
-        JOIN course_offering co ON t.offering_id = co.id
-        JOIN course c ON co.course_id = c.id
-        $whereClause
-    ";
-
-    $stmtCount = mysqli_prepare($conn, $sqlCount);
-    if ($stmtCount) {
-        if (!empty($params)) {
-            mysqli_stmt_bind_param($stmtCount, $types, ...$params);
-        }
-        mysqli_stmt_execute($stmtCount);
-        $resCount = mysqli_stmt_get_result($stmtCount);
-        if ($rowCount = mysqli_fetch_assoc($resCount)) {
-            $totalResults = (int)$rowCount['total'];
-        }
-        mysqli_stmt_close($stmtCount);
-    }
+    $totalResults = $noteModel->countFilteredNotes($offeringFilter, $currentUserId, $filterMyCourses, $searchTerm);
 }
 
 // -------------------------
 // 4) Query effettiva per le note (con LIMIT)
 // -------------------------
 $recentNotes = [];
+$notesData = $noteModel->getFilteredNotes($offeringFilter, $currentUserId, $filterMyCourses, $searchTerm, $sort, $limit);
 
-$sqlBase = "
-    SELECT
-        n.id,
-        n.title,
-        n.vote_count,
-        COALESCE(n.published_at, n.created_at) AS note_date,
-        c.name AS course_name,
-        t.name AS topic_name,
-        CONCAT(pt.name, ' ', pt.surname) AS teacher_name,
-        CONCAT(po.name, ' ', po.surname) AS author_name
-    FROM note n
-    JOIN topic t ON n.topic_id = t.id
-    JOIN course_offering co ON t.offering_id = co.id
-    JOIN course c ON co.course_id = c.id
-    LEFT JOIN course_offering_teacher cot ON co.id = cot.offering_id
-    LEFT JOIN teacher th ON cot.teacher_id = th.person_id
-    LEFT JOIN person pt ON th.person_id = pt.id              -- docente
-    LEFT JOIN user uo ON n.owner_id = uo.person_id
-    LEFT JOIN person po ON uo.person_id = po.id              -- autore
-    $whereClause
-    GROUP BY n.id
-    ORDER BY $orderBy
-    LIMIT ?
-";
-
-// aggiungo il LIMIT come ultimo parametro
-$typesWithLimit      = $types . "i";
-$paramsWithLimit     = $params;
-$paramsWithLimit[]   = $limit;
-
-$stmt = mysqli_prepare($conn, $sqlBase);
-if ($stmt) {
-    mysqli_stmt_bind_param($stmt, $typesWithLimit, ...$paramsWithLimit);
-    mysqli_stmt_execute($stmt);
-    $res = mysqli_stmt_get_result($stmt);
-    while ($row = mysqli_fetch_assoc($res)) {
-
-        $exam = $row['course_name'];
-        if (!empty($row['teacher_name'])) {
-            $exam .= ' - ' . $row['teacher_name'];
-        }
-
-        $recentNotes[] = [
-            'id'=> $row['id'],
-            "title"      => $row["title"],
-            "course"     => $row["course_name"],
-            "exam"       => $exam,
-            "author"     => $row["author_name"] ?: "Anonimo",
-            "date"       => $row["note_date"],
-            "likes"      => (int)$row["vote_count"],
-        ];
+foreach ($notesData as $row) {
+    $exam = $row['course_name'];
+    if (!empty($row['teacher_name'])) {
+        $exam .= ' - ' . $row['teacher_name'];
     }
-    mysqli_stmt_close($stmt);
+
+    $recentNotes[] = [
+        'id'=> $row['id'],
+        "title"      => $row["title"],
+        "course"     => $row["course_name"],
+        "exam"       => $exam,
+        "author"     => $row["author_name"] ?: "Anonimo",
+        "date"       => $row["note_date"],
+        "likes"      => (int)$row["vote_count"],
+    ];
 }
 
 // -------------------------
 // 5) Corsi popolari (sidebar / All courses)
 // -------------------------
-$popularCourses = [];
-
-$sqlCourses = "
-    SELECT c.id, c.name, COUNT(n.id) AS notes_count
-    FROM course c
-    JOIN course_offering co ON co.course_id = c.id
-    JOIN topic t ON t.offering_id = co.id
-    JOIN note n ON n.topic_id = t.id AND n.status = 'published'
-    GROUP BY c.id
-    ORDER BY notes_count DESC, c.name ASC
-    LIMIT 10
-";
-
-$resultCourses = mysqli_query($conn, $sqlCourses);
-if ($resultCourses) {
-    while ($row = mysqli_fetch_assoc($resultCourses)) {
-        $popularCourses[] = $row['name']; // non lo usi, ma lo lascio se ti serve altrove
-    }
+if (!isset($courseModel)) {
+    $courseModel = new CourseModel();
 }
+$popularCoursesData = $courseModel->getPopularCourses(10);
+$popularCourses = array_column($popularCoursesData, 'name');
 ?>
 
 <div class="container py-4">
@@ -259,7 +116,7 @@ if ($resultCourses) {
     <div class="mb-4">
         <div class="d-flex flex-column flex-lg-row justify-content-between align-items-lg-center gap-3 mb-3">
             <div class="d-flex align-items-center gap-2">
-                <span class="fs-4">📘</span>
+                <i class="bi bi-book" style="font-size: 1.5rem; color: #2563eb;" aria-hidden="true"></i>
                 <div>
                     <h1 class="h4 mb-1">Notes</h1>
                     <small class="text-muted">
@@ -363,7 +220,9 @@ if ($resultCourses) {
                         <div class="card-body">
                             <div class="d-flex justify-content-between align-items-start">
                                 <div>
-                                    <a href="index.php?page=note_view&id=<?php echo htmlspecialchars($note['id']); ?>" class="small text-primary text-decoration-none">
+                                    <a href="index.php?page=note_view&id=<?php echo htmlspecialchars($note['id']); ?>" 
+                                       class="small text-primary text-decoration-none"
+                                       aria-label="View note: <?php echo htmlspecialchars($note['title']); ?>">
                                         <h2 class="h5 mb-1">
                                             <?php echo htmlspecialchars($note["title"]); ?>
                                         </h2>
@@ -378,10 +237,10 @@ if ($resultCourses) {
                             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                                 <div class="text-muted small">
                                     <span class="me-3">
-                                        👤 <?php echo htmlspecialchars($note["author"]); ?>
+                                        <i class="bi bi-person" aria-hidden="true"></i> <?php echo htmlspecialchars($note["author"]); ?>
                                     </span>
                                     <span>
-                                        📅 
+                                        <i class="bi bi-calendar3" aria-hidden="true"></i> 
                                         <?php
                                         $date = date("d M Y", strtotime($note["date"]));
                                         echo htmlspecialchars($date);
@@ -391,7 +250,7 @@ if ($resultCourses) {
 
                                 <div class="d-flex align-items-center gap-3">
                                     <span class="small text-muted">
-                                        ⬆ <?php echo (int)$note["likes"]; ?>
+                                        <i class="bi bi-arrow-up-circle" aria-hidden="true"></i> <?php echo (int)$note["likes"]; ?>
                                     </span>
                                 </div>
                             </div>
@@ -428,7 +287,9 @@ if ($resultCourses) {
                             }
                             $loadMoreUrl = 'index.php?' . http_build_query($loadMoreParams);
                         ?>
-                        <a class="btn btn-outline-primary" href="<?php echo htmlspecialchars($loadMoreUrl); ?>">
+                        <a class="btn btn-outline-primary" 
+                           href="<?php echo htmlspecialchars($loadMoreUrl); ?>"
+                           aria-label="Load more notes">
                             Load more
                         </a>
                     </div>

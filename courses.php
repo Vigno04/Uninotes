@@ -9,67 +9,27 @@ if (!isset($_SESSION['person_id'])) {
 $currentUserId = (int)$_SESSION['person_id'];
 
 // tutti i corsi con info su offerings
-$allCourses = [];
-$sqlCourses = "
-    SELECT 
-        c.id, 
-        c.name, 
-        c.description,
-        COUNT(DISTINCT co.id) AS offering_count,
-        COUNT(DISTINCT n.id) AS note_count,
-        (SELECT co2.id FROM course_offering co2 WHERE co2.course_id = c.id ORDER BY co2.year DESC, co2.semester DESC LIMIT 1) AS single_offering_id,
-        (SELECT co2.year FROM course_offering co2 WHERE co2.course_id = c.id ORDER BY co2.year DESC, co2.semester DESC LIMIT 1) AS single_offering_year,
-        (SELECT co2.semester FROM course_offering co2 WHERE co2.course_id = c.id ORDER BY co2.year DESC, co2.semester DESC LIMIT 1) AS single_offering_semester
-    FROM course c
-    LEFT JOIN course_offering co ON co.course_id = c.id
-    LEFT JOIN topic t ON t.offering_id = co.id
-    LEFT JOIN note n ON n.topic_id = t.id AND n.status = 'published'
-    GROUP BY c.id, c.name, c.description
-    ORDER BY c.name
-";
-$resAll = mysqli_query($conn, $sqlCourses);
-if ($resAll) {
-    while ($row = mysqli_fetch_assoc($resAll)) {
-        $allCourses[] = $row;
-    }
-}
+$courseModel = new CourseModel();
+$allCourses = $courseModel->getAllCoursesWithStats();
 
 // corsi con almeno un offering seguito + info sugli offerings seguiti
 $followedCourseIds = [];
 $followedOfferingsPerCourse = []; // [course_id => [offering_id, ...]]
 
-$sqlFollowed = "
-    SELECT 
-        c.id AS course_id,
-        co.id AS offering_id,
-        co.year,
-        co.semester
-    FROM course_offering_follow cof
-    JOIN course_offering co ON cof.offering_id = co.id
-    JOIN course c ON co.course_id = c.id
-    WHERE cof.user_id = ?
-    ORDER BY c.id, co.year DESC, co.semester DESC
-";
-$stmtF = mysqli_prepare($conn, $sqlFollowed);
-if ($stmtF) {
-    mysqli_stmt_bind_param($stmtF, "i", $currentUserId);
-    mysqli_stmt_execute($stmtF);
-    $resF = mysqli_stmt_get_result($stmtF);
-    while ($rowF = mysqli_fetch_assoc($resF)) {
-        $courseId = (int)$rowF['course_id'];
-        if (!in_array($courseId, $followedCourseIds, true)) {
-            $followedCourseIds[] = $courseId;
-        }
-        if (!isset($followedOfferingsPerCourse[$courseId])) {
-            $followedOfferingsPerCourse[$courseId] = [];
-        }
-        $followedOfferingsPerCourse[$courseId][] = [
-            'id' => (int)$rowF['offering_id'],
-            'year' => $rowF['year'],
-            'semester' => $rowF['semester']
-        ];
+$followedData = $courseModel->getFollowedCoursesWithOfferings($currentUserId);
+foreach ($followedData as $rowF) {
+    $courseId = (int)$rowF['course_id'];
+    if (!in_array($courseId, $followedCourseIds, true)) {
+        $followedCourseIds[] = $courseId;
     }
-    mysqli_stmt_close($stmtF);
+    if (!isset($followedOfferingsPerCourse[$courseId])) {
+        $followedOfferingsPerCourse[$courseId] = [];
+    }
+    $followedOfferingsPerCourse[$courseId][] = [
+        'id' => (int)$rowF['offering_id'],
+        'year' => $rowF['year'],
+        'semester' => $rowF['semester']
+    ];
 }
 ?>
 
@@ -134,14 +94,17 @@ if ($stmtF) {
                                     if ($followedCount === 1) {
                                         $href = 'index.php?page=home&offering_id=' . (int)$followedOfferings[0]['id'];
                                         $btnText = 'View notes →';
+                                        $ariaLabel = 'View notes for ' . htmlspecialchars($course['name']);
                                     } else {
                                         // Se segui più offerings, vai alla pagina degli offerings
                                         $href = 'index.php?page=course_offerings&course_id=' . $courseId;
                                         $btnText = 'View offerings →';
+                                        $ariaLabel = 'View offerings for ' . htmlspecialchars($course['name']);
                                     }
                                     ?>
                                     <a href="<?php echo $href; ?>"
-                                       class="btn btn-sm btn-primary w-100">
+                                       class="btn btn-sm btn-primary w-100"
+                                       aria-label="<?php echo $ariaLabel; ?>">
                                         <?php echo $btnText; ?>
                                     </a>
                                     

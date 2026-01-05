@@ -2,43 +2,14 @@
 
 <?php
 
+// Get course options for the dropdown
+$courseModel = new CourseModel();
+$courseOptions = $courseModel->getAllCourses();
 
-
-// COurse
-// Course
-$courseFilter = isset($_GET['course_id']) && $_GET['course_id'] !== '' ? (int)$_GET['course_id'] : null;
-
-$courseOptions = [];
-$sqlCourseOptions = "
-    SELECT id, name
-    FROM course
-    ORDER BY name
-";
-$resultCourseOptions = mysqli_query($conn, $sqlCourseOptions);
-if ($resultCourseOptions) {
-    while ($row = mysqli_fetch_assoc($resultCourseOptions)) {
-        $courseOptions[] = $row;
-    }
-}
-
-
-// Topic
-$topicFilter = isset($_GET['topic_id']) && $_GET['topic_id'] !== '' ? (int)$_GET['topic_id'] : null;
-
-
-$topicOptions = [];
-$sqlTopicOptions = "
-    SELECT DISTINCT t.id, t.name
-    FROM topic t
-    ORDER BY t.name
-";
-
-$resultTopicOptions = mysqli_query($conn, $sqlTopicOptions);
-if ($resultTopicOptions) {
-    while ($row = mysqli_fetch_assoc($resultTopicOptions)) {
-        $topicOptions[] = $row;
-    }
-}
+// Use the selected values from the controller
+// $selectedTopicCourseId contains the course_id of the selected topic
+// $selectedTopic contains the topic_id
+// $topics contains the available topics for the selected course
 
 ?>
 
@@ -92,29 +63,35 @@ if ($resultTopicOptions) {
                                 <!-- Corso (Esame) -->
                     <div class="col-12 col-md-6 mb-3">
                     <label for="course-select" class="form-label">Course (Exam) *</label>
-                    <select id="course-select" class="form-select" name="course" required>
-                        <option value="" disabled selected>Select course</option>
+                    <select id="course-select" class="form-select" name="course" required <?php echo $mode === 'edit' ? 'disabled' : ''; ?>>
+                        <option value="" disabled <?php echo !$selectedTopicCourseId ? 'selected' : ''; ?>>Select course</option>
                         <?php foreach ($courseOptions as $course): ?>
                             <option value="<?php echo (int)$course['id']; ?>"
-                                <?php echo ($courseFilter === (int)$course['id']) ? 'selected' : ''; ?>>
+                                <?php echo ($selectedTopicCourseId === (int)$course['id']) ? 'selected' : ''; ?>>
                                 <?php echo htmlspecialchars($course['name']); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <?php if ($mode === 'edit'): ?>
+                        <input type="hidden" name="course" value="<?php echo (int)$selectedTopicCourseId; ?>">
+                    <?php endif; ?>
                     </div>
 
                     <!-- Topic selection -->
                     <div class="col-12 col-md-6 mb-3">
                         <label for="topic-select" class="form-label">Topic *</label>
-                        <select id="topic-select" class="form-select" name="topic" required>
-                        <option value="" disabled selected>Select topic</option>
-                        <?php foreach ($topicOptions as $topic): ?>
-                            <option value="<?php echo (int)$topic['id']; ?>"
-                                <?php echo ($topicFilter === (int)$topic['id']) ? 'selected' : ''; ?>>
-                                <?php echo htmlspecialchars($topic['name']); ?>
+                        <select id="topic-select" class="form-select" name="topic" required <?php echo ($mode === 'edit' || empty($topics)) ? 'disabled' : ''; ?>>
+                        <option value="" disabled <?php echo !$selectedTopic ? 'selected' : ''; ?>>Select topic</option>
+                        <?php foreach ($topics as $topicId => $topicName): ?>
+                            <option value="<?php echo (int)$topicId; ?>"
+                                <?php echo ($selectedTopic === (int)$topicId) ? 'selected' : ''; ?>>
+                                <?php echo htmlspecialchars($topicName); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
+                    <?php if ($mode === 'edit'): ?>
+                        <input type="hidden" name="topic" value="<?php echo (int)$selectedTopic; ?>">
+                    <?php endif; ?>
                     </div>
 
                     <hr class="my-4">
@@ -280,25 +257,30 @@ function deleteFile(fileId, filename) {
 
 // Course offering change handler
 (function () {
-    const courseEl = document.getElementById('course_offering') || document.getElementById('course-select');
-    const topicSelect = document.getElementById('topic') || document.getElementById('topic-select');
+    const courseEl = document.getElementById('course-select');
+    const topicSelect = document.getElementById('topic-select');
 
     if (!courseEl || !topicSelect) return; // nothing to do on this page
 
     courseEl.addEventListener('change', function() {
-        const offeringId = this.value;
+        const courseId = this.value;
 
-        if (offeringId) {
-            topicSelect.disabled = false;
-            topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
+        if (courseId) {
+            topicSelect.disabled = true;
+            topicSelect.innerHTML = '<option value="" disabled selected>Loading...</option>';
 
-            fetch(`get_topics.php?offering_id=${offeringId}`)
+            fetch(`get_topics_by_course.php?course_id=${courseId}`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.error) {
                         console.error(data.error);
+                        topicSelect.innerHTML = '<option value="" disabled selected>Error loading topics</option>';
                         return;
                     }
+                    
+                    topicSelect.disabled = false;
+                    topicSelect.innerHTML = '<option value="" disabled selected>Select topic</option>';
+                    
                     data.forEach(topic => {
                         const option = document.createElement('option');
                         option.value = topic.id;
