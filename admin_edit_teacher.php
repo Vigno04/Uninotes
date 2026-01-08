@@ -1,0 +1,138 @@
+<?php
+// admin-teacher-edit.php
+require_once("bootstrap.php");
+
+if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
+    header('Location: login.php');
+    exit;
+}
+
+$userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : 0;
+if ($userId <= 0) {
+    header('Location: index.php?page=manage_users');
+    exit;
+}
+
+// Fetch basic user info + teacher row (if any)
+$teacherModel = new TeacherModel();
+$user = $teacherModel->getUserWithTeacherInfo($userId);
+
+if (!$user) {
+    header('Location: index.php?page=manage_users');
+    exit;
+}
+
+// Handle POST: update / create teacher
+$successMessage = '';
+$errorMessage   = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $department   = trim($_POST['department'] ?? '');
+    $unibo_site   = trim($_POST['unibo_site'] ?? '');
+    $phone_number = trim($_POST['phone_number'] ?? '');
+    $personal_site= trim($_POST['personal_site'] ?? '');
+
+    if (is_null($user['teacher_person_id'])) {
+        // create new teacher row
+        if ($teacherModel->createTeacherProfile($userId, $department, $unibo_site, $phone_number, $personal_site)) {
+            $successMessage = 'Teacher profile created successfully.';
+            $user['teacher_person_id'] = $userId;
+            $user['department']        = $department;
+            $user['unibo_site']        = $unibo_site;
+            $user['phone_number']      = $phone_number;
+            $user['personal_site']     = $personal_site;
+        } else {
+            $errorMessage = 'Error creating teacher profile.';
+        }
+    } else {
+        // update existing teacher row
+        if ($teacherModel->updateTeacherProfile($userId, $department, $unibo_site, $phone_number, $personal_site)) {
+            $successMessage = 'Teacher profile updated successfully.';
+            $user['department']    = $department;
+            $user['unibo_site']    = $unibo_site;
+            $user['phone_number']  = $phone_number;
+            $user['personal_site'] = $personal_site;
+        } else {
+            $errorMessage = 'Error updating teacher profile.';
+        }
+    }
+}
+?>
+
+<div class="container py-4 py-lg-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-8">
+
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h1 class="h4 mb-3">Teacher profile</h1>
+                    <p class="text-muted mb-4">
+                        Review and edit the teacher information for this user.
+                    </p>
+
+                    <div class="mb-3">
+                        <strong>User:</strong>
+                        <?php echo htmlspecialchars($user['name'] . ' ' . $user['surname']); ?>
+                        <br>
+                        <span class="text-muted small">
+                            <?php echo htmlspecialchars($user['email']); ?>
+                        </span>
+                    </div>
+
+                    <?php if ($successMessage): ?>
+                        <div class="alert alert-success" role="status"><?php echo htmlspecialchars($successMessage); ?></div>
+                    <?php endif; ?>
+
+                    <?php if ($errorMessage): ?>
+                        <div class="alert alert-danger" role="alert"><?php echo htmlspecialchars($errorMessage); ?></div>
+                    <?php endif; ?>
+
+                    <form method="post">
+                        <div class="mb-3">
+                            <label for="edit-department" class="form-label">Department</label>
+                            <input id="edit-department" type="text"
+                                   name="department"
+                                   class="form-control"
+                                   value="<?php echo htmlspecialchars($user['department'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-unibo" class="form-label">University website (Unibo)</label>
+                            <input id="edit-unibo" type="url"
+                                   name="unibo_site"
+                                   class="form-control"
+                                   value="<?php echo htmlspecialchars($user['unibo_site'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-phone" class="form-label">Phone number</label>
+                            <input id="edit-phone" type="text"
+                                   name="phone_number"
+                                   class="form-control"
+                                   value="<?php echo htmlspecialchars($user['phone_number'] ?? ''); ?>">
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="edit-personal" class="form-label">Personal website</label>
+                            <input id="edit-personal" type="url"
+                                   name="personal_site"
+                                   class="form-control"
+                                   value="<?php echo htmlspecialchars($user['personal_site'] ?? ''); ?>">
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-3">
+                            <a href="index.php?page=manage_users" class="btn btn-outline-secondary btn-sm">
+                                ← Back to users
+                            </a>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                Save teacher profile
+                            </button>
+                        </div>
+                    </form>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>

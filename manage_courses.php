@@ -1,0 +1,81 @@
+<?php
+// TODO: crea teachers
+// TODO: crea corsi
+
+// admin-manage-courses.php
+require_once("bootstrap.php");
+
+if (!isset($_SESSION['person_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
+    header('Location: login.php');
+    exit;
+}
+
+// Query: corsi + numero offerte + numero note
+$courseModel = new CourseModel();
+$courses = $courseModel->getCoursesForManagement();
+?>
+
+<div class="container py-4 py-lg-5">
+    <div class="row justify-content-center">
+        <div class="col-12 col-lg-10">
+
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4 p-lg-5">
+                    <h1 class="h4 mb-3">Manage courses</h1>
+                    <p class="text-muted mb-4">
+                        Overview of all courses in UniNotes. Later you’ll be able to edit and create new ones.
+                    </p>
+
+                    <?php if (empty($courses)): ?>
+                        <p class="text-muted">No courses found.</p>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-sm align-middle">
+                                <caption class="visually-hidden">List of courses with name, code, programme and actions</caption>
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Course</th>
+                                        <th>Description</th>
+                                        <th>Offerings</th>
+                                        <th>Notes</th>
+                                        <th>Edit</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($courses as $c): ?>
+                                        <tr>
+                                            <td><?php echo htmlspecialchars($c['name']); ?></td>
+                                            <td class="small text-muted" style="max-width: 360px;">
+                                                <?php echo htmlspecialchars($c['description'] ?? ''); ?>
+                                            </td>
+                                            <td><?php echo (int)$c['offering_count']; ?></td>
+                                            <td><?php echo (int)$c['note_count']; ?></td>
+                                            <td>
+                                                <a href="index.php?page=admin_course_edit&id=<?php echo (int)$c['id']; ?>"
+                                                class="btn btn-outline-primary btn-sm">
+                                                    Manage
+                                                </a>
+                                            </td>
+                                            
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+
+                    <a href="index.php?page=admin_course_edit" class="btn btn-primary btn-sm">
+                        + Create new course
+                    </a>
+
+                    <div class="mt-4">
+                        <a href="index.php?page=admindashboard" class="btn btn-outline-secondary btn-sm">
+                            ← Back to dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
